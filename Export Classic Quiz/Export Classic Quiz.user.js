@@ -63,8 +63,8 @@
 
     async function updateImageURL(image) {
         var dataApiEndpoint, settings, response, responseJSON;
-        console.log('Updating Image URL');
         dataApiEndpoint = image.getAttribute('data-api-endpoint');
+
         settings = {
             headers: {
                 "X-CSRFToken": getCsrfToken()
@@ -77,40 +77,96 @@
         return image;
     }
 
+    async function findLatestSubmission() {
+        var settings, response, responseJSON, url, submissionData;
+        var submissions = [];
+        url = `${window.location.origin}/api/v1/courses/${courseId}/quizzes/${quizId}/submissions`;
+        settings = {
+            headers: {
+                "X-CSRFToken": getCsrfToken()
+            },
+        }
+
+        response = await fetch(url, settings);
+        responseJSON = await response.json();
+
+        responseJSON.quiz_submissions.forEach(submission => {
+            submissionData = {
+                time: Date.parse(submission.started_at).getTime(),
+                submissionId: submission.id,
+            }
+            submissions = [...submissions, submissionData]
+        })
+
+        const latestSubmission = submissions.reduce(function (prev, current) {
+            return (prev.time > current.time) ? prev : current
+        })
+
+        return latestSubmission;
+    }
+
+    async function orderQuestions(questions) {
+        var settings, response, responseJSON, url;
+
+        console.log('Reordering questions.');
+
+        const latestSubmission = await findLatestSubmission();
+
+        url = `${window.location.origin}/api/v1/quiz_submissions/${latestSubmission.submissionId}/questions`;
+        settings = {
+            headers: {
+                "X-CSRFToken": getCsrfToken()
+            },
+        }
+
+        response = await fetch(url, settings);
+        responseJSON = await response.json();
+        const submissionQuestions = responseJSON.quiz_submission_questions
+
+        questions.forEach(question => {
+            question.position = submissionQuestions.find(q => { return q.id === question.id }).position ? submissionQuestions.find(q => { return q.id === question.id }).position : null;
+        })
+
+        const orderedQuestions = questions.sort((a, b) => (a.position != null ? a.position : Infinity) - (b.position != null ? b.position : Infinity))
+
+        return orderedQuestions;
+    }
+
     async function processQuestions(questions) {
         var innerHTML = '';
-        var question, answers, el, qText, newImage, svg, imagesLength, svgLength;
+        var question, answers, qEl, qText, newImage, svg, imagesLength, svgLength;
 
         if (questions.length === 0) {
             alert('No questions found');
             return;
         }
 
+        // Canvas' Quiz Questions API includes a 'position' parameter but it always returns null (it is broken). Therefore, ordering of questions must be done based on a quiz submission. The function orderQuestions identifies the most recent submission and reorders questions (if necessary) to reflect this order.
+        questions = await orderQuestions(questions)
+        console.log("🚀 DEBUGGING ~ file: Export Classic Quiz.user.js ~ line 151 ~ processQuestions ~ questions", questions);
+
         for (let i = 0; i < questions.length; i++) {
             question = questions[i];
+            console.log("🚀 DEBUGGING ~ file: Export Classic Quiz.user.js ~ line 155 ~ processQuestions ~ question", question);
             qText = question.question_text;
-            el = document.createElement('html');
-            el.innerHTML = qText;
+            qEl = document.createElement('html');
+            qEl.innerHTML = qText;
 
             // Update image URLS
-            if (el.querySelectorAll('img:not(.equation_image)').length > 0) {
-                for (let i = 0; i < el.querySelectorAll('img:not(.equation_image)').length; i++) {
-                    newImage = await updateImageURL(el.querySelectorAll('img:not(.equation_image)')[i]);
-                    el.querySelectorAll('img:not(.equation_image)')[i].replaceWith(newImage)
+            if (qEl.querySelectorAll('img:not(.equation_image)').length > 0) {
+                for (let i = 0; i < qEl.querySelectorAll('img:not(.equation_image)').length; i++) {
+                    newImage = await updateImageURL(qEl.querySelectorAll('img:not(.equation_image)')[i]);
+                    qEl.querySelectorAll('img:not(.equation_image)')[i].replaceWith(newImage)
                 }
-
-                qText = el.querySelector('body').innerHTML;
-                console.log("🚀 DEBUGGING ~ file: Export Quiz.user.js ~ line 107 ~ processQuestions ~ qText", qText);
+                qText = qEl.querySelector('body').innerHTML;
             }
+            //qEl = updateImageURL(qEl)
 
 
             // Update SVG image elements
-            if (el.querySelectorAll('.equation_image').length > 0) {
-                console.log('found an svg')
-                for (let i = 0; i < el.querySelectorAll('.equation_image').length; i++) el.querySelectorAll('.equation_image')[i].setAttribute('src', `${el.querySelectorAll('.equation_image')[i].src}.svg`);
-
-                qText = el.querySelector('body').innerHTML;
-                console.log("🚀 DEBUGGING ~ file: Export Quiz.user.js ~ line 107 ~ processQuestions ~ qText", qText);
+            if (qEl.querySelectorAll('.equation_image').length > 0) {
+                for (let i = 0; i < qEl.querySelectorAll('.equation_image').length; i++) qEl.querySelectorAll('.equation_image')[i].setAttribute('src', `${qEl.querySelectorAll('.equation_image')[i].src}.svg`);
+                qText = qEl.querySelector('body').innerHTML;
             }
 
             // Multiple choice questions
@@ -133,8 +189,6 @@
                 return;
             }
         }
-
-        //console.log("🚀 DEBUGGING ~ file: Export Quiz.user.js ~ line 133 ~ processQuestions ~ innerHTML", innerHTML);
 
         Export2Word(innerHTML, 'test');
         return;
