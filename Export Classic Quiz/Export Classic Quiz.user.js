@@ -93,7 +93,6 @@
             el.innerHTML = qText;
 
             // Update image URLS
-            //imagesLength = 
             if (el.querySelectorAll('img:not(.equation_image)').length > 0) {
                 for (let i = 0; i < el.querySelectorAll('img:not(.equation_image)').length; i++) {
                     newImage = await updateImageURL(el.querySelectorAll('img:not(.equation_image)')[i]);
@@ -104,6 +103,7 @@
                 console.log("🚀 DEBUGGING ~ file: Export Quiz.user.js ~ line 107 ~ processQuestions ~ qText", qText);
             }
 
+
             // Update SVG image elements
             if (el.querySelectorAll('.equation_image').length > 0) {
                 console.log('found an svg')
@@ -113,6 +113,7 @@
                 console.log("🚀 DEBUGGING ~ file: Export Quiz.user.js ~ line 107 ~ processQuestions ~ qText", qText);
             }
 
+            // Multiple choice questions
             if (question.question_type === 'multiple_choice_question') {
                 // Question text
                 innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
@@ -120,17 +121,15 @@
                 // Answers
                 answers = question.answers;
                 for (let k = 0; k < answers.length; k++) {
-                    if (answers[k].weight !== 0) { // Correct answer
-                        innerHTML += `<p>*${alphabet[k]}. ${answers[k].text}</p>`;
-                    }
-                    else {
-                        innerHTML += `<p>${alphabet[k]}. ${answers[k].text}</p>`;
-                    }
+                    if (answers[k].weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${answers[k].text}</p>`; // Correct answer
+                    else innerHTML += `<p>${alphabet[k]}. ${answers[k].text}</p>`; // Incorrect answer
                 }
-
+            }
+            else if (question.question_type === 'essay_question') {
+                innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
             }
             else {
-                alert('Non MC question found. Aborting.');
+                alert('Non supported question type found. Aborting.');
                 return;
             }
         }
