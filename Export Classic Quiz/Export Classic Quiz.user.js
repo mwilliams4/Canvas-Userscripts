@@ -59,7 +59,7 @@
             return processQuestions(questions);
         }).then(response => {
             const innerHTML = response;
-            Export2Word(innerHTML, 'TestExport');
+            if (innerHTML) Export2Word(innerHTML, 'TestExport');
         })
 
     }
@@ -109,7 +109,7 @@
     }
 
     async function orderQuestions(questions) {
-        var settings, response, responseJSON, url;
+        var settings, response, responseJSON, url, match;
 
         console.log('Reordering questions.');
 
@@ -127,7 +127,8 @@
         const submissionQuestions = responseJSON.quiz_submission_questions
 
         questions.forEach(question => {
-            question.position = submissionQuestions.find(q => { return q.id === question.id }).position ? submissionQuestions.find(q => { return q.id === question.id }).position : null;
+            match = submissionQuestions.find(q => { return q.id === question.id });
+            question.position = match ? match.position : null;
         })
 
         const orderedQuestions = questions.sort((a, b) => (a.position != null ? a.position : Infinity) - (b.position != null ? b.position : Infinity))
@@ -169,7 +170,7 @@
         if (question.answers.length > 0) {
             console.log(`This question contains answers.`);
             for (let i = 0; i < question.answers.length; i++) {
-                console.log(`RUNNING ANSWER ${i+1}`)
+                console.log(`RUNNING ANSWER ${i + 1}`)
                 aHTML = question.answers[i].html;
                 answerEl = document.createElement('html');
                 answerEl.innerHTML = aHTML;
@@ -230,30 +231,35 @@
             qText = question.question_text;
 
             // Multiple choice questions
-            if (question.question_type === 'multiple_choice_question') {
-                // Question text
-                innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
-
-                // Answers
-                answers = question.answers;
-                for (let k = 0; k < answers.length; k++) {
-                    if (answers[k].html !== '') {
-                        if (answers[k].weight !== 0) innerHTML += `${answers[k].html.slice(0, 3)}*${alphabet[k]}. ${answers[k].html.slice(3)}`; // Correct answer
-                        else innerHTML += `${answers[k].html.slice(0, 3)}${alphabet[k]}. ${answers[k].html.slice(3)}`; // Incorrect answer
+            switch (question.question_type) {
+                case 'multiple_choice_question': {
+                    // Question text
+                    innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
+                    // Answers
+                    answers = question.answers;
+                    for (let k = 0; k < answers.length; k++) {
+                        if (answers[k].html !== '') {
+                            if (answers[k].weight !== 0) innerHTML += `${answers[k].html.slice(0, 3)}*${alphabet[k]}. ${answers[k].html.slice(3)}`; // Correct answer
+                            else innerHTML += `${answers[k].html.slice(0, 3)}${alphabet[k]}. ${answers[k].html.slice(3)}`; // Incorrect answer
+                        }
+                        else {
+                            if (answers[k].weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${answers[k].text}</p>`; // Correct answer
+                            else innerHTML += `<p>${alphabet[k]}. ${answers[k].text}</p>`; // Incorrect answer
+                        }
                     }
-                    else {
-                        if (answers[k].weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${answers[k].text}</p>`; // Correct answer
-                        else innerHTML += `<p>${alphabet[k]}. ${answers[k].text}</p>`; // Incorrect answer
-                    }
+                    break;
                 }
-            }
-
-            else if (question.question_type === 'essay_question') {
-                innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
-            }
-            else {
-                alert('Non supported question type found. Aborting.');
-                return;
+                case '1': {
+                    break;
+                }
+                case 'essay_question': {
+                    innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
+                    break;
+                }
+                default: {
+                    alert('Non supported question type found. Aborting.');
+                    return false;
+                }
             }
         }
 
@@ -292,6 +298,8 @@
             console.log(`Fetched from page ${i}. Questions: ${questions.length}.`);
             i++;
         }
+
+        console.table(questions)
 
         return questions;
     }
