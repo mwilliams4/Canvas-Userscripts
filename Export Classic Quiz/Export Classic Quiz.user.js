@@ -136,7 +136,7 @@
         return orderedQuestions;
     }
 
-    async function updateImages(question) {
+    async function updateGraphics(question) {
         var questionEl, answerEl, qText, aHTML, newImage, length, images;
 
         qText = question.question_text;
@@ -147,7 +147,7 @@
         images = questionEl.querySelectorAll('img[data-api-endpoint]');
         length = images.length;
         if (length > 0) {
-            console.log('This question text has regular images.');
+            // console.log('This question text has regular images.');
             for (let i = 0; i < length; i++) {
                 newImage = await updateImageURL(images[i]);
                 images[i].replaceWith(newImage)
@@ -159,7 +159,7 @@
         images = questionEl.querySelectorAll('.equation_image');
         length = images.length;
         if (length > 0) {
-            console.log('This question text has SVG images.')
+            // console.log('This question text has SVG images.')
             for (let i = 0; i < length; i++) {
                 if (images[i].parentNode.querySelector('span')) images[i].parentNode.querySelector('span').remove();
                 images[i].setAttribute('src', `${images[i].src}.svg`);
@@ -168,9 +168,8 @@
         }
 
         if (question.answers.length > 0) {
-            console.log(`This question contains answers.`);
+            // console.log(`This question contains answers.`);
             for (let i = 0; i < question.answers.length; i++) {
-                console.log(`RUNNING ANSWER ${i + 1}`)
                 aHTML = question.answers[i].html;
                 answerEl = document.createElement('html');
                 answerEl.innerHTML = aHTML;
@@ -179,7 +178,7 @@
                 images = answerEl.querySelectorAll('img[data-api-endpoint]')
                 length = images.length
                 if (length > 0) {
-                    console.log('This answer has regular images.');
+                    // console.log('This answer has regular images.');
                     for (let k = 0; k < length; k++) {
                         newImage = await updateImageURL(images[k]);
                         images[k].replaceWith(newImage)
@@ -189,10 +188,9 @@
 
                 // Update SVG image elements
                 images = answerEl.querySelectorAll('.equation_image');
-                //console.log(images.nextSibling())
                 length = images.length;
                 if (length > 0) {
-                    console.log('This answer has SVG images.');
+                    // console.log('This answer has SVG images.');
                     for (let i = 0; i < length; i++) {
                         if (images[i].parentNode.querySelector('span')) images[i].parentNode.querySelector('span').remove();
                         images[i].setAttribute('src', `${images[i].src}.svg`);
@@ -206,8 +204,6 @@
 
         question.question_text = qText;
 
-        console.log("🚀 DEBUGGING ~ file: Export Classic Quiz.user.js ~ line 204 ~ updateImages ~ question", question);
-
         return question;
     }
 
@@ -220,14 +216,19 @@
             return;
         }
 
+        const columns = ["quiz_id", "id", "quiz_group_id", "position", "question_type", "question_text"];
+        console.table(questions, columns);
+
         // Canvas' Quiz Questions API includes a 'position' parameter but it always returns null (it is broken). Therefore, ordering of questions must be done based on a quiz submission. The function orderQuestions identifies the most recent submission and reorders questions (if necessary) to reflect this order.
         questions = await orderQuestions(questions)
-        console.log("🚀 DEBUGGING ~ file: Export Classic Quiz.user.js ~ line 151 ~ processQuestions ~ questions", questions);
+
+        console.table(questions, columns);
+        // debugger;
 
         for (let i = 0; i < questions.length; i++) {
             console.log(`===================== NOW RUNNING QUESTION ${i + 1} =====================`)
             question = questions[i];
-            question = await updateImages(question);
+            question = await updateGraphics(question);
             qText = question.question_text;
 
             // Multiple choice questions
@@ -238,25 +239,55 @@
                     // Answers
                     answers = question.answers;
                     for (let k = 0; k < answers.length; k++) {
-                        if (answers[k].html !== '') {
-                            if (answers[k].weight !== 0) innerHTML += `${answers[k].html.slice(0, 3)}*${alphabet[k]}. ${answers[k].html.slice(3)}`; // Correct answer
-                            else innerHTML += `${answers[k].html.slice(0, 3)}${alphabet[k]}. ${answers[k].html.slice(3)}`; // Incorrect answer
-                        }
-                        else {
-                            if (answers[k].weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${answers[k].text}</p>`; // Correct answer
-                            else innerHTML += `<p>${alphabet[k]}. ${answers[k].text}</p>`; // Incorrect answer
+                        switch (answers[k].html) {
+                            case '':
+                                if (answers[k].weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${answers[k].text}</p>`; // Correct answer
+                                else innerHTML += `<p>${alphabet[k]}. ${answers[k].text}</p>`; // Incorrect answer
+                                break;
+                            default:
+                                if (answers[k].weight !== 0) innerHTML += `${answers[k].html.slice(0, 3)}*${alphabet[k]}. ${answers[k].html.slice(3)}`; // Correct answer
+                                else innerHTML += `${answers[k].html.slice(0, 3)}${alphabet[k]}. ${answers[k].html.slice(3)}`; // Incorrect answer
+                                break;
                         }
                     }
-                    break;
-                }
-                case '1': {
                     break;
                 }
                 case 'essay_question': {
                     innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
                     break;
                 }
+                case 'file_upload_question': {
+                    innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
+                    break;
+                }
+                case 'true_false_question': {
+                    innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
+                    answers = question.answers;
+                    for (let k = 0; k < answers.length; k++) {
+                        if (answers[k].weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${answers[k].text}</p>`; // Correct answer
+                        else innerHTML += `<p>${alphabet[k]}. ${answers[k].text}</p>`; // Incorrect answer
+                    }
+                    break;
+                }
+                case 'multiple_answers_question': {
+                    innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
+                    answers = question.answers;
+                    for (let k = 0; k < answers.length; k++) {
+                        switch (answers[k].html) {
+                            case undefined:
+                                if (answers[k].weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${answers[k].text}</p>`; // Correct answer
+                                else innerHTML += `<p>${alphabet[k]}. ${answers[k].text}</p>`; // Incorrect answer
+                                break;
+                            default:
+                                if (answers[k].weight !== 0) innerHTML += `${answers[k].html.slice(0, 3)}*${alphabet[k]}. ${answers[k].html.slice(3)}`; // Correct answer
+                                else innerHTML += `${answers[k].html.slice(0, 3)}${alphabet[k]}. ${answers[k].html.slice(3)}`; // Incorrect answer
+                                break;
+                        }
+                    }
+                    break;
+                }
                 default: {
+                    debugger;
                     alert('Non supported question type found. Aborting.');
                     return false;
                 }
@@ -298,9 +329,6 @@
             console.log(`Fetched from page ${i}. Questions: ${questions.length}.`);
             i++;
         }
-
-        console.table(questions)
-
         return questions;
     }
 
