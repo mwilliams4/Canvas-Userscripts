@@ -336,17 +336,6 @@
         var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
         var postHtml = "</body></html>";
 
-        // innerHTML = `<link rel=\"stylesheet\" href=\"https://instructure-uploads-apse2.s3.ap-southeast-2.amazonaws.com/account_198030000000000001/attachments/244067/app.min.css\">
-        // <p><img id=\"2600260\" src=\"https://newcastle.test.instructure.com/courses/265/files/2600260/preview?verifier=QmSZiFpY437Jy9qEl1q6TtnCf9S43HF5ttEUcnhz\" alt=\"doggo.png\" width=\"215\" height=\"222\" 
-        // data-api-endpoint=\"https://newcastle.test.instructure.com/api/v1/courses/265/files/2600260\" data-api-returntype=\"File\"></p>\n
-        // <p>This is question 1. The answer is 1.</p><script src=\"https://instructure-uploads-apse2.s3.ap-southeast-2.amazonaws.com/account_198030000000000001/attachments/71032/canvas_global_app_150621.js\"></script>`
-
-        //     innerHTML = `<p><img class="equation_image" title="\alpha+\beta" src="https://newcastle.test.instructure.com/equation_images/%255Calpha%252B%255Cbeta?scale=1.svg" alt="LaTeX: \alpha+\beta" width="146" height="65" data-equation-content="\alpha+\beta" x-canvaslms-safe-mathml="<math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;>
-        //     <mi>&amp;#x03B1;<!-- α --></mi>
-        //     <mo>+</mo>
-        //     <mi>&amp;#x03B2;<!-- β --></mi>
-        //   </math>"></p>`
-
         var html = preHtml + innerHTML + postHtml;
         var blob = new Blob(['\ufeff', html], {
             type: 'application/msword'
