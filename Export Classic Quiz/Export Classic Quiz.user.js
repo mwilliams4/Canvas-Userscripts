@@ -22,7 +22,7 @@
 
     function addExportButton(buttonText, buttonIcon) {
         if (!document.getElementById(uniqueLinkId)) {
-            const insBefore = document.querySelector('#toolbar-1 > li:nth-child(8)');
+            const insBefore = document.querySelector('#toolbar-1 > li.quiz_menu');
             if (insBefore) {
                 const listItem = document.createElement('li');
                 listItem.setAttribute('role', 'presentation');
@@ -58,6 +58,41 @@
         const innerHTML = await processQuestions(questions);
         const quizName = await getQuizName();
         if (innerHTML) Export2Word(innerHTML, quizName);
+    }
+
+    function isHTML(string) {
+        const el = document.createElement('body');
+        el.innerHTML = string;
+        if (el.childNodes[0].tagName === 'P') return true;
+        return false;
+    }
+
+    function addNumber(string, i) {
+        const el = document.createElement('body');
+        if (isHTML(string)) {
+            el.innerHTML = string;
+            el.childNodes[0].innerHTML = `${i + 1}. ${el.childNodes[0].innerHTML}`
+        }
+        else {
+            const p = document.createElement('p');
+            p.innerHTML = `${i + 1}. ${string}`;
+            el.appendChild(p);
+        }
+        return el.innerHTML;
+    }
+
+    function addLetter(string, k, correct = false) {
+        const el = document.createElement('body');
+        if (isHTML(string)) {
+            el.innerHTML = string;
+            el.childNodes[0].innerHTML = correct ? `*${alphabet[k]}. ${el.childNodes[0].innerHTML}` : `${alphabet[k]}. ${el.childNodes[0].innerHTML}`;
+        }
+        else {
+            const p = document.createElement('p');
+            p.innerHTML = correct ? `*${alphabet[k]}. ${string}` : `${alphabet[k]}. ${string}`;
+            el.appendChild(p);
+        }
+        return el.innerHTML;
     }
 
     async function updateImageURL(image) {
@@ -98,6 +133,8 @@
             submissions = [...submissions, submissionData]
         })
 
+        if (submissions.length === 0) return false;
+
         const latestSubmission = submissions.reduce(function (prev, current) {
             return (prev.time > current.time) ? prev : current
         })
@@ -106,11 +143,19 @@
     }
 
     async function orderQuestions(questions) {
-        var settings, response, responseJSON, url, match;
+        var settings, response, responseJSON, url, match, orderedQuestions;
 
         console.log('Reordering questions.');
 
         const latestSubmission = await findLatestSubmission();
+        if (!latestSubmission) {
+            console.log('No submissions found. Using default order.')
+            if (questions.some(question => question.quiz_group_id !== null)) {
+                orderedQuestions = joinQuestionGroups(questions);
+                return orderedQuestions;
+            }
+            return questions;
+        }
 
         url = `${window.location.origin}/api/v1/quiz_submissions/${latestSubmission.submissionId}/questions`;
         settings = {
@@ -118,19 +163,48 @@
                 "X-CSRFToken": getCsrfToken()
             },
         }
-
         response = await fetch(url, settings);
         responseJSON = await response.json();
         const submissionQuestions = responseJSON.quiz_submission_questions
 
         questions.forEach(question => {
-            match = submissionQuestions.find(q => { return q.id === question.id });
+            match = submissionQuestions.find(submissionQuestion => { return submissionQuestion.id === question.id });
             question.position = match ? match.position : null;
         })
+        orderedQuestions = questions.sort((a, b) => (a.position != null ? a.position : Infinity) - (b.position != null ? b.position : Infinity));
 
-        const orderedQuestions = questions.sort((a, b) => (a.position != null ? a.position : Infinity) - (b.position != null ? b.position : Infinity))
+        if (questions.some(question => question.quiz_group_id !== null)) orderedQuestions = joinQuestionGroups(orderedQuestions);
 
         return orderedQuestions;
+    }
+
+    function joinQuestionGroups(orderedQuestions) {
+        var groupIdCount, fromIndex, toIndex;
+        var groupIdArray = [];
+        const uniqueGroupIds = [];
+
+        orderedQuestions.forEach(question => {
+            if (question.quiz_group_id && uniqueGroupIds.indexOf(question.quiz_group_id) === -1) uniqueGroupIds.push(question.quiz_group_id) // Creating array of uniqueGroupIds
+        })
+
+        for (let i = 0; i < uniqueGroupIds.length; i++) {
+            groupIdCount = orderedQuestions.reduce((count, question) => question.quiz_group_id === uniqueGroupIds[i] ? ++count : count, 0)
+            if (groupIdCount === 1) continue;
+            for (let k = 1; k < groupIdCount; k++) {
+                groupIdArray = orderedQuestions.map(question => question.quiz_group_id)
+                toIndex = groupIdArray.indexOf(uniqueGroupIds[i]) + k;
+                fromIndex = groupIdArray.indexOf(uniqueGroupIds[i], groupIdArray.indexOf(uniqueGroupIds[i]) + k);
+                orderedQuestions = arrayShift(orderedQuestions, fromIndex, toIndex);
+            }
+        }
+        return orderedQuestions;
+    }
+
+    function arrayShift(array, fromIndex, toIndex) {
+        var element = array[fromIndex];
+        array.splice(fromIndex, 1);
+        array.splice(toIndex, 0, element);
+        return array;
     }
 
     async function updateGraphics(question) {
@@ -200,6 +274,7 @@
         var innerHTML = '';
         var question, answers, text, type, html, weight, left, right, distractors;
         var blankIds = [];
+        var matches = [];
 
         if (questions.length === 0) {
             alert('No questions found');
@@ -213,131 +288,104 @@
         questions = await orderQuestions(questions)
 
         console.table(questions, columns);
-        // debugger;
+        //debugger;
 
         for (let i = 0; i < questions.length; i++) {
             console.log(`===================== NOW RUNNING QUESTION ${i + 1} =====================`);
             question = questions[i];
             question = await updateGraphics(question);
             ({ question_text: text, question_type: type, answers, } = question)
+            //if (!isHTML(text)) text = `<p>${text}</p>`;
             blankIds.length = 0;
 
             // Multiple choice questions
             switch (type) {
                 case 'multiple_choice_question': {
-                    // Question text
-                    innerHTML += `${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
-                    // Answers
+                    innerHTML += addNumber(text, i);
                     for (let k = 0; k < answers.length; k++) {
                         ({ html, text, weight, } = answers[k]);
-
-                        switch (html) {
-                            case '':
-                                if (weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${text}</p>`; // Correct answer
-                                else innerHTML += `<p>${alphabet[k]}. ${text}</p>`; // Incorrect answer
-                                break;
-                            default:
-                                if (weight !== 0) innerHTML += `${html.slice(0, 3)}*${alphabet[k]}. ${html.slice(3)}`; // Correct answer
-                                else innerHTML += `${html.slice(0, 3)}${alphabet[k]}. ${html.slice(3)}`; // Incorrect answer
-                                break;
-                        }
+                        if (html) text = html;
+                        if (weight !== 0) innerHTML += addLetter(text, k, true); // Correct answer
+                        else innerHTML += addLetter(text, k); // Incorrect answer
                     }
                     break;
                 }
                 case 'essay_question': {
-                    innerHTML += `<p>Type: E</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    innerHTML += `<p>Type: E</p>${addNumber(text, i)}`;
                     break;
                 }
                 case 'file_upload_question': {
-                    innerHTML += `<p>Type: File Upload</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    innerHTML += `<p>Type: File Upload</p>${addNumber(text, i)}`;
                     break;
                 }
                 case 'true_false_question': {
-                    innerHTML += `<p>Type: T/F</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    innerHTML += `<p>Type: T/F</p>${addNumber(text, i)}`;
                     for (let k = 0; k < answers.length; k++) {
-                        if (answers[k].weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${answers[k].text}</p>`; // Correct answer
-                        else innerHTML += `<p>${alphabet[k]}. ${answers[k].text}</p>`; // Incorrect answer
+                        ({ html, text, weight } = answers[k])
+                        if (answers[k].weight !== 0) innerHTML += addLetter(text, k, true); // Correct answer
+                        else innerHTML += addLetter(text, k); // Incorrect answer
                     }
                     break;
                 }
                 case 'multiple_answers_question': {
-                    innerHTML += `<p>Type: MA</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    innerHTML += `<p>Type: MA</p>${addNumber(text, i)}`;
                     for (let k = 0; k < answers.length; k++) {
                         ({ html, text, weight, } = answers[k]);
-                        switch (html) {
-                            case undefined:
-                                if (weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${text}</p>`; // Correct answer
-                                else innerHTML += `<p>${alphabet[k]}. ${text}</p>`; // Incorrect answer
-                                break;
-                            default:
-                                if (weight !== 0) innerHTML += `${html.slice(0, 3)}*${alphabet[k]}. ${html.slice(3)}`; // Correct answer
-                                else innerHTML += `${html.slice(0, 3)}${alphabet[k]}. ${html.slice(3)}`; // Incorrect answer
-                                break;
-                        }
+                        if (html) text = html;
+                        if (weight !== 0) innerHTML += addLetter(text, k, true); // Correct answer
+                        else innerHTML += addLetter(text, k); // Incorrect answer
                     }
                     break;
                 }
                 case 'short_answer_question': { // Fill in the blank
-                    innerHTML += `<p>Type: F</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    innerHTML += `<p>Type: F</p>${addNumber(text, i)}`;
                     for (let k = 0; k < answers.length; k++) {
                         ({ text } = answers[k]);
-                        innerHTML += `<p>${alphabet[k]}. ${text}</p>`;
+                        innerHTML += addLetter(text, k);
                     }
                     break;
                 }
                 case 'fill_in_multiple_blanks_question': {
-                    innerHTML += `<p>Type: FMB</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
                     answers.forEach(answer => {
                         if (blankIds.indexOf(answer.blank_id) === -1) blankIds.push(answer.blank_id) // Creating array of unique blank ids
                     })
-                    blankIds.forEach(blankId => {
-                        innerHTML += `<p>[${blankId}]:`;
-                        answers.forEach(answer => {
-                            if (answer.blank_id === blankId) innerHTML += ` ${answer.text},`;
-                        })
-                        innerHTML = `${innerHTML.slice(0, -1)}</p>`;
-                    })
+                    for (let k = 0; k < blankIds.length; k++) {
+                        matches.length = 0;
+                        for (let j = 0; j < answers.length; j++) {
+                            if (answers[j].blank_id === blankIds[k]) matches.push(answers[j].text);
+                        }
+                        text = text.replace(`[${blankIds[k]}]`, `[${matches.join(', ')}]`)
+                    }
+                    innerHTML += `<p>Type: FMB</p>${addNumber(text, i)}`;
                     break;
                 }
                 case 'multiple_dropdowns_question': {
-                    innerHTML += `<p>Type: MD</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
                     //debugger;
                     answers.forEach(answer => {
                         if (blankIds.indexOf(answer.blank_id) === -1) blankIds.push(answer.blank_id) // Creating array of unique blank ids
                     })
-                    blankIds.forEach(blankId => {
-                        innerHTML += `<p>[${blankId}]:`;
-                        answers.forEach(answer => {
-                            ({ text, weight } = answer);
-                            if (answer.blank_id === blankId) {
-                                if (weight !== 0) innerHTML += ` *${text},`;
-                                else innerHTML += ` ${text},`;
-                            };
-                        })
-                        innerHTML = `${innerHTML.slice(0, -1)}</p>`;
-                    })
+                    for (let k = 0; k < blankIds.length; k++) {
+                        matches.length = 0;
+                        for (let j = 0; j < answers.length; j++) {
+                            if (answers[j].blank_id === blankIds[k]) matches.push(answers[j].weight !== 0 ? `*${answers[j].text}` : answers[j].text);
+                        }
+                        text = text.replace(`[${blankIds[k]}]`, `[${matches.join(', ')}]`)
+                    }
+                    innerHTML += `<p>Type: MD</p>${addNumber(text, i)}`;
                     break;
                 }
                 case 'text_only_question': {
-                    innerHTML += `<p>Type: Text</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    innerHTML += `<p>Type: Text</p>${addNumber(text, i)}`;
                     break;
                 }
                 case 'matching_question': {
-                    innerHTML += `<p>Type: MT</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    innerHTML += `<p>Type: MT</p>${addNumber(text, i)}`;
                     ({ matching_answer_incorrect_matches: distractors } = question)
-
                     for (let k = 0; k < answers.length; k++) {
                         ({ left, right } = answers[k]);
-                        innerHTML += `<p>${alphabet[k]}. ${left} = ${right}</p>`
+                        innerHTML += addLetter(`${left} = ${right}`, k);
                     }
-                    if (distractors) {
-                        innerHTML += `<p>Distractors:`
-                        distractors = distractors.split('\n');
-                        distractors.forEach(distractor => {
-                            innerHTML += ` ${distractor},`
-                        })
-                        innerHTML = `${innerHTML.slice(0, -1)}</p>`;
-                    }
+                    if (distractors) innerHTML += `<p>Distractors: ${distractors.split('\n').join(', ')}</p>`
                     break;
                 }
                 default: {
@@ -499,37 +547,8 @@
         }
     }
 
-    function addE2WButton() {
-        if (!document.getElementById('e2wButton')) {
-            const insBefore = document.querySelector('#toolbar-1 > li:nth-child(8)');
-            if (insBefore) {
-                const listItem = document.createElement('li');
-                listItem.setAttribute('role', 'presentation');
-                listItem.classList.add('ui-menu-item');
-                listItem.style.setProperty('cursor', 'pointer');
-                const anchor = document.createElement('a');
-                anchor.classList.add('ui-corner-all');
-                anchor.setAttribute('tabindex', '-1');
-                anchor.setAttribute('role', 'menuitem');
-                anchor.id = 'e2wButton';
-                anchor.addEventListener('click', () => {
-                    Export2Word();
-                });
-                const icon = document.createElement('i');
-                icon.classList.add('icon-download');
-                icon.setAttribute('aria-hidden', 'true');
-                anchor.appendChild(icon);
-                anchor.appendChild(document.createTextNode(` E2W`));
-                listItem.appendChild(anchor)
-                insBefore.parentNode.insertBefore(listItem, insBefore);
-            }
-        }
-        return;
-    }
-
     if (document.readyState !== 'loading') {
         addExportButton('Export Quiz', 'icon-download');
-        addE2WButton();
     } else {
         document.addEventListener('DOMContentLoaded', () => {
             addExportButton('Export Quiz', 'icon-download');
