@@ -48,19 +48,25 @@
         return;
     }
 
-    function processRequest() {
+    async function processRequest() {
         if (!checkIds()) {
             alert('Couldn\'t identify course and/or quiz.')
             return;
         }
 
-        getQuestions().then(response => {
-            const questions = response;
-            return processQuestions(questions);
-        }).then(response => {
-            const innerHTML = response;
-            if (innerHTML) Export2Word(innerHTML, 'TestExport');
-        })
+        const questions = await getQuestions();
+        const innerHTML = await processQuestions(questions);
+        const quizName = await getQuizName();
+        if (innerHTML) Export2Word(innerHTML, quizName)
+
+        // getQuestions().then(response => {
+        //     const questions = response;
+        //     return processQuestions(questions);
+        // }).then(response => {
+        //     const innerHTML = response;
+
+        //     if (innerHTML) Export2Word(innerHTML);
+        // })
 
     }
 
@@ -137,79 +143,71 @@
     }
 
     async function updateGraphics(question) {
-        var questionEl, answerEl, qText, aHTML, newImage, length, images;
+        var questionEl, answerEl, newImage, images, span;
 
-        qText = question.question_text;
-        questionEl = document.createElement('html');
-        questionEl.innerHTML = qText;
+        questionEl = document.createElement('body');
+        questionEl.innerHTML = question.question_text;
 
         // Update image URLS
         images = questionEl.querySelectorAll('img[data-api-endpoint]');
-        length = images.length;
-        if (length > 0) {
+        if (images.length > 0) {
             // console.log('This question text has regular images.');
-            for (let i = 0; i < length; i++) {
+            for (let i = 0; i < images.length; i++) {
                 newImage = await updateImageURL(images[i]);
                 images[i].replaceWith(newImage)
             }
-            qText = questionEl.querySelector('body').innerHTML;
         }
 
         // Update SVG image elements
         images = questionEl.querySelectorAll('.equation_image');
-        length = images.length;
-        if (length > 0) {
+        if (images.length > 0) {
             // console.log('This question text has SVG images.')
-            for (let i = 0; i < length; i++) {
-                if (images[i].parentNode.querySelector('span')) images[i].parentNode.querySelector('span').remove();
+            for (let i = 0; i < images.length; i++) {
+                span = images[i].parentNode.querySelector('span');
+                if (span) span.remove();
                 images[i].setAttribute('src', `${images[i].src}.svg`);
             }
-            qText = questionEl.querySelector('body').innerHTML;
         }
+
+        question.question_text = questionEl.innerHTML;
 
         if (question.answers.length > 0) {
             // console.log(`This question contains answers.`);
             for (let i = 0; i < question.answers.length; i++) {
-                aHTML = question.answers[i].html;
-                answerEl = document.createElement('html');
-                answerEl.innerHTML = aHTML;
+                answerEl = document.createElement('body');
+                answerEl.innerHTML = question.answers[i].html;
 
                 // Update image URLS
                 images = answerEl.querySelectorAll('img[data-api-endpoint]')
-                length = images.length
-                if (length > 0) {
+                if (images.length > 0) {
                     // console.log('This answer has regular images.');
-                    for (let k = 0; k < length; k++) {
+                    for (let k = 0; k < images.length; k++) {
                         newImage = await updateImageURL(images[k]);
                         images[k].replaceWith(newImage)
                     }
-                    aHTML = answerEl.querySelector('body').innerHTML;
+                    question.answers[i].html = answerEl.innerHTML;
                 }
 
                 // Update SVG image elements
                 images = answerEl.querySelectorAll('.equation_image');
-                length = images.length;
-                if (length > 0) {
+                if (images.length > 0) {
                     // console.log('This answer has SVG images.');
-                    for (let i = 0; i < length; i++) {
-                        if (images[i].parentNode.querySelector('span')) images[i].parentNode.querySelector('span').remove();
+                    for (let i = 0; i < images.length; i++) {
+                        span = images[i].parentNode.querySelector('span');
+                        if (span) span.remove();
                         images[i].setAttribute('src', `${images[i].src}.svg`);
                     }
-                    aHTML = answerEl.querySelector('body').innerHTML;
+                    question.answers[i].html = answerEl.innerHTML;
                 }
-
-                question.answers[i].html = aHTML;
             }
         }
-
-        question.question_text = qText;
 
         return question;
     }
 
     async function processQuestions(questions) {
         var innerHTML = '';
-        var question, answers, qText;
+        var question, answers, text, type, html, weight;
 
         if (questions.length === 0) {
             alert('No questions found');
@@ -229,40 +227,40 @@
             console.log(`===================== NOW RUNNING QUESTION ${i + 1} =====================`)
             question = questions[i];
             question = await updateGraphics(question);
-            qText = question.question_text;
+            ({ question_text: text, question_type: type, answers, } = question)
 
             // Multiple choice questions
-            switch (question.question_type) {
+            switch (type) {
                 case 'multiple_choice_question': {
                     // Question text
-                    innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
+                    innerHTML += `${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
                     // Answers
-                    answers = question.answers;
                     for (let k = 0; k < answers.length; k++) {
-                        switch (answers[k].html) {
+                        ({ html, text, weight, } = answers[k]);
+
+                        switch (html) {
                             case '':
-                                if (answers[k].weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${answers[k].text}</p>`; // Correct answer
-                                else innerHTML += `<p>${alphabet[k]}. ${answers[k].text}</p>`; // Incorrect answer
+                                if (weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${text}</p>`; // Correct answer
+                                else innerHTML += `<p>${alphabet[k]}. ${text}</p>`; // Incorrect answer
                                 break;
                             default:
-                                if (answers[k].weight !== 0) innerHTML += `${answers[k].html.slice(0, 3)}*${alphabet[k]}. ${answers[k].html.slice(3)}`; // Correct answer
-                                else innerHTML += `${answers[k].html.slice(0, 3)}${alphabet[k]}. ${answers[k].html.slice(3)}`; // Incorrect answer
+                                if (weight !== 0) innerHTML += `${html.slice(0, 3)}*${alphabet[k]}. ${html.slice(3)}`; // Correct answer
+                                else innerHTML += `${html.slice(0, 3)}${alphabet[k]}. ${html.slice(3)}`; // Incorrect answer
                                 break;
                         }
                     }
                     break;
                 }
                 case 'essay_question': {
-                    innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
+                    innerHTML += `${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
                     break;
                 }
                 case 'file_upload_question': {
-                    innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
+                    innerHTML += `${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
                     break;
                 }
                 case 'true_false_question': {
-                    innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
-                    answers = question.answers;
+                    innerHTML += `${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
                     for (let k = 0; k < answers.length; k++) {
                         if (answers[k].weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${answers[k].text}</p>`; // Correct answer
                         else innerHTML += `<p>${alphabet[k]}. ${answers[k].text}</p>`; // Incorrect answer
@@ -270,25 +268,33 @@
                     break;
                 }
                 case 'multiple_answers_question': {
-                    innerHTML += `${qText.slice(0, 3)}${i + 1}. ${qText.slice(3)}`;
-                    answers = question.answers;
+                    innerHTML += `${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
                     for (let k = 0; k < answers.length; k++) {
-                        switch (answers[k].html) {
+                        ({ html, text, weight, } = answers[k]);
+                        switch (html) {
                             case undefined:
-                                if (answers[k].weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${answers[k].text}</p>`; // Correct answer
-                                else innerHTML += `<p>${alphabet[k]}. ${answers[k].text}</p>`; // Incorrect answer
+                                if (weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${text}</p>`; // Correct answer
+                                else innerHTML += `<p>${alphabet[k]}. ${text}</p>`; // Incorrect answer
                                 break;
                             default:
-                                if (answers[k].weight !== 0) innerHTML += `${answers[k].html.slice(0, 3)}*${alphabet[k]}. ${answers[k].html.slice(3)}`; // Correct answer
-                                else innerHTML += `${answers[k].html.slice(0, 3)}${alphabet[k]}. ${answers[k].html.slice(3)}`; // Incorrect answer
+                                if (weight !== 0) innerHTML += `${html.slice(0, 3)}*${alphabet[k]}. ${html.slice(3)}`; // Correct answer
+                                else innerHTML += `${html.slice(0, 3)}${alphabet[k]}. ${html.slice(3)}`; // Incorrect answer
                                 break;
                         }
                     }
                     break;
                 }
+                case 'short_answer_question': { // Fill in the blank
+                    innerHTML += `<p>[FILL IN THE BLANK]</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    for (let k = 0; k < answers.length; k++) {
+                        ({ text } = answers[k]);
+                        innerHTML += `<p>*${alphabet[k]}. ${text}</p>`;
+                    }
+                    break;
+                }
                 default: {
                     debugger;
-                    alert('Non supported question type found. Aborting.');
+                    //alert('Non supported question type found. Aborting.');
                     return false;
                 }
             }
@@ -332,7 +338,7 @@
         return questions;
     }
 
-    function Export2Word(innerHTML = '<p>This is a test!</p>', filename = 'test') {
+    function Export2Word(innerHTML = '<p>This is a test!</p>', filename = 'quiz_export') {
         var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
         var postHtml = "</body></html>";
 
@@ -362,6 +368,21 @@
             downloadLink.click();
         }
         document.body.removeChild(downloadLink);
+    }
+
+    async function getQuizName() {
+        var url = `${window.location.origin}/api/v1/courses/${courseId}/quizzes/${quizId}`;
+        var settings = {
+            headers: {
+                "X-CSRFToken": getCsrfToken()
+            },
+        };
+
+        const response = await fetch(url, settings);
+        const responseJSON = await response.json();
+
+        return responseJSON.title;
+
     }
 
     function getCsrfToken() {
