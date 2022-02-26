@@ -58,20 +58,10 @@
         const innerHTML = await processQuestions(questions);
         const quizName = await getQuizName();
         if (innerHTML) Export2Word(innerHTML, quizName)
-
-        // getQuestions().then(response => {
-        //     const questions = response;
-        //     return processQuestions(questions);
-        // }).then(response => {
-        //     const innerHTML = response;
-
-        //     if (innerHTML) Export2Word(innerHTML);
-        // })
-
     }
 
     async function updateImageURL(image) {
-        var dataApiEndpoint, settings, response, responseJSON;
+        var dataApiEndpoint, settings, response, responseJSON, url, uuid;
         dataApiEndpoint = image.getAttribute('data-api-endpoint');
 
         settings = {
@@ -81,8 +71,9 @@
         }
         response = await fetch(dataApiEndpoint, settings);
         responseJSON = await response.json();
+        ({ url, uuid } = responseJSON)
 
-        image.setAttribute('src', `${responseJSON.url}&verifier=${responseJSON.uuid}`)
+        image.setAttribute('src', `${url}&verifier=${uuid}`)
         return image;
     }
 
@@ -207,7 +198,9 @@
 
     async function processQuestions(questions) {
         var innerHTML = '';
+        var innerHTML1 = '';
         var question, answers, text, type, html, weight;
+        var blankIds = [];
 
         if (questions.length === 0) {
             alert('No questions found');
@@ -220,11 +213,11 @@
         // Canvas' Quiz Questions API includes a 'position' parameter but it always returns null (it is broken). Therefore, ordering of questions must be done based on a quiz submission. The function orderQuestions identifies the most recent submission and reorders questions (if necessary) to reflect this order.
         questions = await orderQuestions(questions)
 
-        console.table(questions, columns);
+        console.table(questions);
         // debugger;
 
         for (let i = 0; i < questions.length; i++) {
-            console.log(`===================== NOW RUNNING QUESTION ${i + 1} =====================`)
+            console.log(`===================== NOW RUNNING QUESTION ${i + 1} =====================`);
             question = questions[i];
             question = await updateGraphics(question);
             ({ question_text: text, question_type: type, answers, } = question)
@@ -285,11 +278,26 @@
                     break;
                 }
                 case 'short_answer_question': { // Fill in the blank
-                    innerHTML += `<p>[FILL IN THE BLANK]</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    innerHTML += `<p>Type: F</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
                     for (let k = 0; k < answers.length; k++) {
                         ({ text } = answers[k]);
-                        innerHTML += `<p>*${alphabet[k]}. ${text}</p>`;
+                        innerHTML += `<p>${alphabet[k]}. ${text}</p>`;
                     }
+                    break;
+                }
+                case 'fill_in_multiple_blanks_question': {
+                    innerHTML += `<p>Type: FMB</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    //debugger;
+                    answers.forEach(answer => {
+                        if (blankIds.indexOf(answer.blank_id) === -1) blankIds.push(answer.blank_id) // Creating array of unique blank ids
+                    })
+                    blankIds.forEach(blankId => {
+                        innerHTML += `<p>${blankId}:`;
+                        answers.forEach(answer => {
+                            if (answer.blank_id === blankId) innerHTML += ` ${answer.text},`;
+                        })
+                        innerHTML = `${innerHTML.slice(0, -1)}</p>`;
+                    })
                     break;
                 }
                 default: {
