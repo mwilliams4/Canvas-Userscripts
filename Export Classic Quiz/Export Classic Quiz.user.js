@@ -63,7 +63,7 @@
     function isHTML(string) {
         const el = document.createElement('body');
         el.innerHTML = string;
-        if (el.childNodes[0].tagName === 'P') return true;
+        if (el.childNodes.length > 0 && el.childNodes[0].tagName === 'P') return true;
         return false;
     }
 
