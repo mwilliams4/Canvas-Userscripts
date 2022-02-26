@@ -57,7 +57,7 @@
         const questions = await getQuestions();
         const innerHTML = await processQuestions(questions);
         const quizName = await getQuizName();
-        if (innerHTML) Export2Word(innerHTML, quizName)
+        if (innerHTML) Export2Word(innerHTML, quizName);
     }
 
     async function updateImageURL(image) {
@@ -198,8 +198,7 @@
 
     async function processQuestions(questions) {
         var innerHTML = '';
-        var innerHTML1 = '';
-        var question, answers, text, type, html, weight;
+        var question, answers, text, type, html, weight, left, right, distractors;
         var blankIds = [];
 
         if (questions.length === 0) {
@@ -213,7 +212,7 @@
         // Canvas' Quiz Questions API includes a 'position' parameter but it always returns null (it is broken). Therefore, ordering of questions must be done based on a quiz submission. The function orderQuestions identifies the most recent submission and reorders questions (if necessary) to reflect this order.
         questions = await orderQuestions(questions)
 
-        console.table(questions);
+        console.table(questions, columns);
         // debugger;
 
         for (let i = 0; i < questions.length; i++) {
@@ -221,6 +220,7 @@
             question = questions[i];
             question = await updateGraphics(question);
             ({ question_text: text, question_type: type, answers, } = question)
+            blankIds.length = 0;
 
             // Multiple choice questions
             switch (type) {
@@ -245,15 +245,15 @@
                     break;
                 }
                 case 'essay_question': {
-                    innerHTML += `${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    innerHTML += `<p>Type: E</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
                     break;
                 }
                 case 'file_upload_question': {
-                    innerHTML += `${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    innerHTML += `<p>Type: File Upload</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
                     break;
                 }
                 case 'true_false_question': {
-                    innerHTML += `${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    innerHTML += `<p>Type: T/F</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
                     for (let k = 0; k < answers.length; k++) {
                         if (answers[k].weight !== 0) innerHTML += `<p>*${alphabet[k]}. ${answers[k].text}</p>`; // Correct answer
                         else innerHTML += `<p>${alphabet[k]}. ${answers[k].text}</p>`; // Incorrect answer
@@ -261,7 +261,7 @@
                     break;
                 }
                 case 'multiple_answers_question': {
-                    innerHTML += `${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    innerHTML += `<p>Type: MA</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
                     for (let k = 0; k < answers.length; k++) {
                         ({ html, text, weight, } = answers[k]);
                         switch (html) {
@@ -287,17 +287,57 @@
                 }
                 case 'fill_in_multiple_blanks_question': {
                     innerHTML += `<p>Type: FMB</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
-                    //debugger;
                     answers.forEach(answer => {
                         if (blankIds.indexOf(answer.blank_id) === -1) blankIds.push(answer.blank_id) // Creating array of unique blank ids
                     })
                     blankIds.forEach(blankId => {
-                        innerHTML += `<p>${blankId}:`;
+                        innerHTML += `<p>[${blankId}]:`;
                         answers.forEach(answer => {
                             if (answer.blank_id === blankId) innerHTML += ` ${answer.text},`;
                         })
                         innerHTML = `${innerHTML.slice(0, -1)}</p>`;
                     })
+                    break;
+                }
+                case 'multiple_dropdowns_question': {
+                    innerHTML += `<p>Type: MD</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    //debugger;
+                    answers.forEach(answer => {
+                        if (blankIds.indexOf(answer.blank_id) === -1) blankIds.push(answer.blank_id) // Creating array of unique blank ids
+                    })
+                    blankIds.forEach(blankId => {
+                        innerHTML += `<p>[${blankId}]:`;
+                        answers.forEach(answer => {
+                            ({ text, weight } = answer);
+                            if (answer.blank_id === blankId) {
+                                if (weight !== 0) innerHTML += ` *${text},`;
+                                else innerHTML += ` ${text},`;
+                            };
+                        })
+                        innerHTML = `${innerHTML.slice(0, -1)}</p>`;
+                    })
+                    break;
+                }
+                case 'text_only_question': {
+                    innerHTML += `<p>Type: Text</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    break;
+                }
+                case 'matching_question': {
+                    innerHTML += `<p>Type: MT</p>${text.slice(0, 3)}${i + 1}. ${text.slice(3)}`;
+                    ({ matching_answer_incorrect_matches: distractors } = question)
+
+                    for (let k = 0; k < answers.length; k++) {
+                        ({ left, right } = answers[k]);
+                        innerHTML += `<p>${alphabet[k]}. ${left} = ${right}</p>`
+                    }
+                    if (distractors) {
+                        innerHTML += `<p>Distractors:`
+                        distractors = distractors.split('\n');
+                        distractors.forEach(distractor => {
+                            innerHTML += ` ${distractor},`
+                        })
+                        innerHTML = `${innerHTML.slice(0, -1)}</p>`;
+                    }
                     break;
                 }
                 default: {
@@ -346,11 +386,11 @@
         return questions;
     }
 
-    function Export2Word(innerHTML = '<p>This is a test!</p>', filename = 'quiz_export') {
-        var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
+    function Export2Word(innerHTML, filename = 'quiz_export') {
+        var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body style='font-family: Arial'>";
         var postHtml = "</body></html>";
 
-        var html = preHtml + innerHTML + postHtml;
+        var html = `${preHtml}${innerHTML}${postHtml}`;
         var blob = new Blob(['\ufeff', html], {
             type: 'application/msword'
         });
