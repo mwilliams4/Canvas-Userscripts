@@ -6,8 +6,8 @@
 // @description  A simple script to remove the scroll bar from a users course enrolments in Canvas
 // @author       Matthew Williams
 // @include      https://canvas.newcastle.edu.au/accounts/*/users/*
-// @include      https://newcastle.test.instructure.com/courses/*/users
-// @include      https://newcastle.beta.instructure.com/courses/*/users
+// @include      https://newcastle.test.instructure.com/accounts/*/users/*
+// @include      https://newcastle.beta.instructure.com/accounts/*/users/*
 // ==/UserScript==
 
 (function () {
