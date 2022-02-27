@@ -270,6 +270,34 @@
         return question;
     }
 
+    async function getQuestionOrderIds() {
+        const responseText = await $.ajax({
+            url: `${window.location.origin}/courses/${courseId}/quizzes/${quizId}/edit`,
+            success: function (data) {
+                console.log('done!')
+                return data;
+            }
+        });
+
+        const doc = document.createElement('div');
+        doc.innerHTML = responseText;
+
+        const questionNodes = doc.querySelectorAll('div.question_text.user_content[id]:not(#question_new_question_text)');
+        const questionNodesArray = Array.from(questionNodes);
+        const questionOrderIds = questionNodesArray.map(node => Number(node.id.split('_')[1]));
+
+        return questionOrderIds;
+    }
+
+    async function orderQuestionsV2(questions) {
+        const questionOrderIds = await getQuestionOrderIds();
+        if (questions.length !== questionOrderIds.length) {
+            return false;
+        }
+        const orderedQuestions = questions.sort((a, b) => questionOrderIds.indexOf(a.id) - questionOrderIds.indexOf(b.id));
+        return orderedQuestions;
+    }
+
     async function processQuestions(questions) {
         var innerHTML = '';
         var question, answers, text, type, html, weight, left, right, distractors;
@@ -277,21 +305,25 @@
         var matches = [];
 
         if (questions.length === 0) {
-            alert('No questions found');
+            alert('No questions found. Questions in banks need to be done manually.');
             return;
         }
 
-        const columns = ["quiz_id", "id", "quiz_group_id", "position", "question_type", "question_text"];
+        const columns = ["id", "quiz_group_id", "position", "question_text"];
         console.table(questions, columns);
 
         // Canvas' Quiz Questions API includes a 'position' parameter but it always returns null (it is broken). Therefore, ordering of questions must be done based on a quiz submission. The function orderQuestions identifies the most recent submission and reorders questions (if necessary) to reflect this order.
-        questions = await orderQuestions(questions)
-
+        //questions = await orderQuestions(questions)
+        questions = await orderQuestionsV2(questions)
+        if (!questions) {
+            alert('Number of questions retrieved by API does not match number of questions scraped from quiz. Aborting.')
+            return;
+        }
         console.table(questions, columns);
         //debugger;
 
         for (let i = 0; i < questions.length; i++) {
-            console.log(`===================== NOW RUNNING QUESTION ${i + 1} =====================`);
+            // console.log(`===================== NOW RUNNING QUESTION ${i + 1} =====================`);
             question = questions[i];
             question = await updateGraphics(question);
             ({ question_text: text, question_type: type, answers, } = question)
