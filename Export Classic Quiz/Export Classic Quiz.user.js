@@ -10,7 +10,6 @@
 // @include      https://newcastle.beta.instructure.com/courses/*/quizzes/*
 // ==/UserScript==
 
-
 (function () {
     'use strict';
 
@@ -204,7 +203,7 @@
 
     async function processQuestions(questions) {
         var innerHTML = '';
-        var question, answers, text, type, html, weight, left, right, distractors;
+        var question, answers, text, type, html, weight, left, right, distractors, answerType, start, end, approximate, precision, exact, margin, variables, answer_tolerance, formulas, name, min, max, decimals;
         var blankIds = [];
         var matches = [];
 
@@ -236,6 +235,8 @@
             ({ question_text: text, question_type: type, answers, } = question)
             //if (!isHTML(text)) text = `<p>${text}</p>`;
             blankIds.length = 0;
+
+            if (i !== 0) innerHTML += '<br>';
 
             // Multiple choice questions
             switch (type) {
@@ -325,6 +326,37 @@
                         innerHTML += addLetter(`${left} = ${right}`, k);
                     }
                     if (distractors) innerHTML += `<p>Distractors: ${distractors.split('\n').join(', ')}</p>`
+                    break;
+                }
+                case 'numerical_question': {
+                    innerHTML += `<p>Type: Numerical</p>${addNumber(text, i)}`;
+                    for (let k = 0; k < answers.length; k++) {
+                        ({ numerical_answer_type: answerType, start, end, approximate, precision, exact, margin } = answers[k]);
+                        switch (answerType) {
+                            case 'range_answer': {
+                                innerHTML += addLetter(`Answer in the range: between ${start} and ${end}.`, k, true);
+                                break;
+                            }
+                            case 'precision_answer': {
+                                innerHTML += addLetter(`Answer with precision: ${approximate} with precision ${precision}.`, k, true);
+                                break;
+                            }
+                            case 'exact_answer': {
+                                innerHTML += addLetter(`Exact answer: ${exact} with error margin ${margin}.`, k, true);
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+                case 'calculated_question': {
+                    innerHTML += `<p>Type: Formula</p>${addNumber(text, i)}`;
+                    ({ variables, answer_tolerance, formulas } = question)
+                    for (let k = 0; k < variables.length; k++) {
+                        ({ name, min, max, scale: decimals } = variables[k])
+                        innerHTML += `<p>[${name}]: min = ${min}, max = ${max}, decimals = ${decimals}</p>`;
+                    }
+                    innerHTML += `<p>Formula: ${formulas.at(-1).formula}</p><p>Answer tolerance: ${answer_tolerance}</p>`
                     break;
                 }
                 default: {
