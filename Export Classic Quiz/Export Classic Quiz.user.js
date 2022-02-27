@@ -16,34 +16,47 @@
     const courseId = getCourseId();
 
     const quizId = getQuizId();
-    const uniqueLinkId = 'mw_section_upload';
+    const uniqueLinkId = 'mw_export_classic_quiz';
     const alphabet = 'abcdefghijklmnopqrstuvwxyz';
 
     function addExportButton(buttonText, buttonIcon) {
-        if (!document.getElementById(uniqueLinkId)) {
-            const insBefore = document.querySelector('#toolbar-1 > li.quiz_menu');
-            if (insBefore) {
-                const listItem = document.createElement('li');
-                listItem.setAttribute('role', 'presentation');
-                listItem.classList.add('ui-menu-item');
-                listItem.style.setProperty('cursor', 'pointer');
-                const anchor = document.createElement('a');
-                anchor.classList.add('ui-corner-all');
-                anchor.setAttribute('tabindex', '-1');
-                anchor.setAttribute('role', 'menuitem');
-                anchor.id = uniqueLinkId;
-                anchor.addEventListener('click', () => {
-                    processRequest();
-                });
-                const icon = document.createElement('i');
-                icon.classList.add(buttonIcon);
-                icon.setAttribute('aria-hidden', 'true');
-                anchor.appendChild(icon);
-                anchor.appendChild(document.createTextNode(` ${buttonText}`));
-                listItem.appendChild(anchor)
-                insBefore.parentNode.insertBefore(listItem, insBefore);
+        var insBefore;
+        if (document.getElementById(uniqueLinkId)) return;
+        switch (window.location.href) {
+            case `${window.location.origin}/courses/${courseId}/quizzes/${quizId}`:
+            case `${window.location.origin}/courses/${courseId}/quizzes/${quizId}/`: {
+                insBefore = document.querySelector('#toolbar-1 > li.quiz_menu');
+                if (!insBefore) return;
+                break;
             }
+            case `${window.location.origin}/courses/${courseId}/quizzes/${quizId}/edit`:
+            case `${window.location.origin}/courses/${courseId}/quizzes/${quizId}/edit/`: {
+                insBefore = document.querySelector('#manage-toolbar > li > a.delete_quiz_link').parentNode;
+                console.log("🚀 DEBUGGING ~ file: Export Classic Quiz.user.js ~ line 32 ~ addExportButton ~ insBefore", insBefore);
+                if (!insBefore) return;
+                break;
+            }
+            default: return;
         }
+        const listItem = document.createElement('li');
+        listItem.setAttribute('role', 'presentation');
+        listItem.classList.add('ui-menu-item');
+        listItem.style.setProperty('cursor', 'pointer');
+        const anchor = document.createElement('a');
+        anchor.classList.add('ui-corner-all');
+        anchor.setAttribute('tabindex', '-1');
+        anchor.setAttribute('role', 'menuitem');
+        anchor.id = uniqueLinkId;
+        anchor.addEventListener('click', () => {
+            processRequest();
+        });
+        const icon = document.createElement('i');
+        icon.classList.add(buttonIcon);
+        icon.setAttribute('aria-hidden', 'true');
+        anchor.appendChild(icon);
+        anchor.appendChild(document.createTextNode(` ${buttonText}`));
+        listItem.appendChild(anchor)
+        insBefore.parentNode.insertBefore(listItem, insBefore);
         return;
     }
 
@@ -56,6 +69,26 @@
         const questions = await getQuestions();
         const innerHTML = await processQuestions(questions);
         const quizName = await getQuizName();
+        //console.log(innerHTML);
+        const innerHTM = `<p>1. <img id="2600260" src="https://newcastle.test.instructure.com/files/2600260/download?download_frd=1&amp;verifier=QmSZiFpY437Jy9qEl1q6TtnCf9S43HF5ttEUcnhz" alt="doggo.png" width="86" height="89" data-api-endpoint="https://newcastle.test.instructure.com/api/v1/courses/265/files/2600260" data-api-returntype="File"></p>
+        <p>This is <strong>question</strong> 1. The answer is 1.</p>
+        <p><img id="248028" src="https://newcastle.test.instructure.com/files/248028/download?download_frd=1&amp;verifier=SQNfPNQXZtjlXMTCeIedUaT8eDI2vOshAjFmtggl" alt="eq_ef28cd.gif" data-api-endpoint="https://newcastle.test.instructure.com/api/v1/courses/265/files/248028" data-api-returntype="File"></p>
+        <p><img class="equation_image" title="\alpha+\beta" src="https://newcastle.test.instructure.com/equation_images/%255Calpha%252B%255Cbeta?scale=1.svg" alt="LaTeX: \alpha+\beta" data-equation-content="\alpha+\beta" x-canvaslms-safe-mathml="<math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;>
+          <mi>&amp;#x03B1;<!-- α --></mi>
+          <mo>+</mo>
+          <mi>&amp;#x03B2;<!-- β --></mi>
+        </math>"></p>
+        <p>&nbsp;</p>
+        <p><img src="https://newcastle.test.instructure.com/equation_images/%5Csum_%7Bi%3D1%7D%5E%5Cinfty?scale=1.svg"></p>
+        <p>&nbsp;</p><p>*a. 1</p><p>b. 2</p><p>c. 3</p><p>d. 4</p><br><p>2. QG Question 1</p><p>*a. 1<img id="2600257" src="https://newcastle.test.instructure.com/files/2600257/download?download_frd=1&amp;verifier=HjncZsbzGAL5xEP1hPQ3SXV1QP0FcHbFMu428fnU" alt="doggo.jpg" data-api-endpoint="https://newcastle.test.instructure.com/api/v1/courses/265/files/2600257" data-api-returntype="File"></p>
+        <p><img class="equation_image" title="\Gamma" src="https://newcastle.test.instructure.com/equation_images/%255CGamma?scale=1.svg" alt="LaTeX: \Gamma" width="133" height="200" data-equation-content="\Gamma" x-canvaslms-safe-mathml="<math xmlns=&quot;http://www.w3.org/1998/Math/MathML&quot;>
+          <mi mathvariant=&quot;normal&quot;>&amp;#x0393;<!-- Γ --></mi>
+        </math>"></p><p>b. 2</p><p>c. 3</p><p>d. 4</p>
+        <p><img src="https://images.unsplash.com/photo-1573865526739-10659fec78a5?crop=entropy&amp;cs=tinysrgb&amp;fit=max&amp;fm=jpg&amp;ixid=Mnw3NjA3NXwwfDF8c2VhcmNofDN8fGNhdHxlbnwxfHx8fDE2NDU3MDAyOTI&amp;ixlib=rb-1.2.1&amp;q=80&amp;w=1080" alt="selective focus photography of orange and white cat on brown table" width="136" height="190"></p><br><p>3. QG question 2</p><p>a. 1</p><p>b. 3</p><p>c. 4</p><p>*d. 5</p><br><p>Type: E</p><p>4. Just an essay.</p><br><p>Type: E</p><p>5. Blah</p><br><p>Type: File Upload</p><p>6. Hi this is a file upload.</p>
+        <p><img src="https://newcastle.test.instructure.com/files/2886982/download?download_frd=1&amp;verifier=q238kyT998eOwmjVWzLrHWsCI9wrq6kGXgQSVS60" alt="dog-food-recall-1024x538.jpg" width="173" height="91" data-api-endpoint="https://newcastle.test.instructure.com/api/v1/courses/265/files/2886982" data-api-returntype="File"></p>
+        <p><img src="https://images.unsplash.com/photo-1604430352727-c0555f882e01?crop=entropy&amp;cs=tinysrgb&amp;fit=max&amp;fm=jpg&amp;ixid=Mnw3NjA3NXwwfDF8c2VhcmNofDV8fGtpdHR5fGVufDF8fHx8MTY0NTgzODY2Ng&amp;ixlib=rb-1.2.1&amp;q=80&amp;w=1080" alt="orange tabby kitten on gray concrete floor" width="96" height="144"></p><br><p>Type: T/F</p><p>7. Hi this is a T/F.</p><p>*a. True</p><p>b. False</p><br><p>Type: MA</p><p>8. Hi this is a MA.</p><p>*a. 1</p><p>*b. 2</p><p>c. 3</p><br><p>Type: F</p><p>9. 3 plus [a] is 4?</p><p>a. 1</p><p>b. One</p><br><p>Type: FMB</p><p>10. Roses are [red, pink], violets are [blue].</p><br><p>Type: MD</p><p>11. The sky is [brown, *blue, red].</p>
+        <p>Grass is [orange, *green].</p><br><p>Type: Text</p><p>12. Just a test question</p><br><p>Type: File Upload</p><p>13. Upload your file here.</p><br><p>14. Hi</p><p>*a. 1</p><p>b. 2</p><p>c. 3</p><p>d. 4</p><br><p>Type: MT</p><p>15. Match the number to its word.</p>
+        <p><img src="https://images.unsplash.com/photo-1611604189291-82542bc9c822?crop=entropy&amp;cs=tinysrgb&amp;fit=max&amp;fm=jpg&amp;ixid=Mnw3NjA3NXwwfDF8c2VhcmNofDExfHxhbHBhY2F8ZW58MXx8fHwxNjQ1ODUxMTA2&amp;ixlib=rb-1.2.1&amp;q=80&amp;w=1080" alt="brown 4 legged animal on green grass field during daytime" width="173" height="133"></p><p>a. 1 = One</p><p>b. 2 = Two</p><p>c. 3 = Three</p><p>d.  = </p><p>Distractors: Four, Five</p><br><p>Type: Numerical</p><p>16. Numerical answer question.</p><p>*a. Answer in the range: between 1 and 2.</p><p>*b. Answer with precision: 1 with precision 5.</p><p>*c. Exact answer: 2 with error margin 0.05.</p><br><p>Type: Formula</p><p>17. What is 5 plus [x] minus [y]?</p><p>[x]: min = 5, max = 8, decimals = 0</p><p>[y]: min = 1, max = 3, decimals = 2</p><p>Formula: 5+x-y</p><p>Answer tolerance: 10%</p>`
         if (innerHTML) Export2Word(innerHTML, quizName);
     }
 
@@ -112,7 +145,8 @@
     }
 
     async function updateGraphics(question) {
-        var questionEl, answerEl, newImage, images, span;
+        var questionEl, answerEl, newImage, images, span, paragraphs, re, match, height, width, text, html;
+        const svgHeight = 23;
 
         questionEl = document.createElement('body');
         questionEl.innerHTML = question.question_text;
@@ -135,6 +169,27 @@
                 span = images[i].parentNode.querySelector('span');
                 if (span) span.remove();
                 images[i].setAttribute('src', `${images[i].src}.svg`);
+                height = Number(images[i].getAttribute('height'));
+                width = Number(images[i].getAttribute('width'));
+                width = svgHeight / (height / width)
+                images[i].setAttribute('height', svgHeight.toString());
+                images[i].setAttribute('width', width.toString());
+            }
+        }
+
+        // Convert inline LaTeX to images
+        paragraphs = questionEl.querySelectorAll('p');
+        if (paragraphs.length > 0) {
+            // console.log('This question text has SVG images.')
+            for (let i = 0; i < paragraphs.length; i++) {
+                re = /\\\((.+)\\\)/;
+                match = re.exec(paragraphs[i].innerHTML);
+                if (match) {
+                    newImage = document.createElement('img');
+                    newImage.setAttribute('src', `${window.location.origin}/equation_images/${encodeURIComponent(match[1])}?scale=1.svg`);
+                    paragraphs[i].innerHTML = paragraphs[i].innerHTML.replace(match[0], newImage.outerHTML);
+                    match.length = 0;
+                }
             }
         }
 
@@ -142,19 +197,21 @@
 
         if (question.answers.length > 0) {
             // console.log(`This question contains answers.`);
-            for (let i = 0; i < question.answers.length; i++) {
+            for (let k = 0; k < question.answers.length; k++) {
+                ({ html, text } = question.answers[k])
                 answerEl = document.createElement('body');
-                answerEl.innerHTML = question.answers[i].html;
+                if (!html) html = text;
+                answerEl.innerHTML = html;
 
                 // Update image URLS
                 images = answerEl.querySelectorAll('img[data-api-endpoint]')
                 if (images.length > 0) {
                     // console.log('This answer has regular images.');
-                    for (let k = 0; k < images.length; k++) {
-                        newImage = await updateImageURL(images[k]);
-                        images[k].replaceWith(newImage)
+                    for (let i = 0; i < images.length; i++) {
+                        newImage = await updateImageURL(images[i]);
+                        images[i].replaceWith(newImage)
                     }
-                    question.answers[i].html = answerEl.innerHTML;
+                    question.answers[k].html = answerEl.innerHTML;
                 }
 
                 // Update SVG image elements
@@ -165,10 +222,28 @@
                         span = images[i].parentNode.querySelector('span');
                         if (span) span.remove();
                         images[i].setAttribute('src', `${images[i].src}.svg`);
+                        height = Number(images[i].getAttribute('height'));
+                        width = Number(images[i].getAttribute('width'));
+                        width = svgHeight / (height / width)
+                        images[i].setAttribute('height', svgHeight.toString());
+                        images[i].setAttribute('width', width.toString());
                     }
-                    question.answers[i].html = answerEl.innerHTML;
+                    question.answers[k].html = answerEl.innerHTML;
                 }
+                // Convert inline LaTeX to images
+
+                re = /\\\((.+)\\\)/;
+                match = re.exec(answerEl.innerHTML);
+                if (match) {
+                    newImage = document.createElement('img');
+                    newImage.setAttribute('src', `${window.location.origin}/equation_images/${encodeURIComponent(match[1])}?scale=1.svg`);
+                    answerEl.innerHTML = answerEl.innerHTML.replace(match[0], newImage.outerHTML);
+                    match.length = 0;
+                    question.answers[k].html = answerEl.innerHTML;
+                }
+
             }
+
         }
 
         return question;
@@ -226,7 +301,6 @@
 
         console.log('Ordered questions:')
         console.table(questions, columns);
-        //debugger;
 
         for (let i = 0; i < questions.length; i++) {
             // console.log(`===================== NOW RUNNING QUESTION ${i + 1} =====================`);
