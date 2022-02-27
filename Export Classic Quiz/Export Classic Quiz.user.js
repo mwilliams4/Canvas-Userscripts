@@ -61,7 +61,7 @@
     }
 
     function isHTML(string) {
-        const el = document.createElement('body');
+        const el = document.createElement('div');
         el.innerHTML = string;
         if (el.childNodes.length > 0 && el.childNodes[0].tagName === 'P') return true;
         return false;
@@ -110,101 +110,6 @@
 
         image.setAttribute('src', `${url}&verifier=${uuid}`)
         return image;
-    }
-
-    async function findLatestSubmission() {
-        var settings, response, responseJSON, url, submissionData;
-        var submissions = [];
-        url = `${window.location.origin}/api/v1/courses/${courseId}/quizzes/${quizId}/submissions`;
-        settings = {
-            headers: {
-                "X-CSRFToken": getCsrfToken()
-            },
-        }
-
-        response = await fetch(url, settings);
-        responseJSON = await response.json();
-
-        responseJSON.quiz_submissions.forEach(submission => {
-            submissionData = {
-                time: Date.parse(submission.started_at).getTime(),
-                submissionId: submission.id,
-            }
-            submissions = [...submissions, submissionData]
-        })
-
-        if (submissions.length === 0) return false;
-
-        const latestSubmission = submissions.reduce(function (prev, current) {
-            return (prev.time > current.time) ? prev : current
-        })
-
-        return latestSubmission;
-    }
-
-    async function orderQuestions(questions) {
-        var settings, response, responseJSON, url, match, orderedQuestions;
-
-        console.log('Reordering questions.');
-
-        const latestSubmission = await findLatestSubmission();
-        if (!latestSubmission) {
-            console.log('No submissions found. Using default order.')
-            if (questions.some(question => question.quiz_group_id !== null)) {
-                orderedQuestions = joinQuestionGroups(questions);
-                return orderedQuestions;
-            }
-            return questions;
-        }
-
-        url = `${window.location.origin}/api/v1/quiz_submissions/${latestSubmission.submissionId}/questions`;
-        settings = {
-            headers: {
-                "X-CSRFToken": getCsrfToken()
-            },
-        }
-        response = await fetch(url, settings);
-        responseJSON = await response.json();
-        const submissionQuestions = responseJSON.quiz_submission_questions
-
-        questions.forEach(question => {
-            match = submissionQuestions.find(submissionQuestion => { return submissionQuestion.id === question.id });
-            question.position = match ? match.position : null;
-        })
-        orderedQuestions = questions.sort((a, b) => (a.position != null ? a.position : Infinity) - (b.position != null ? b.position : Infinity));
-
-        if (questions.some(question => question.quiz_group_id !== null)) orderedQuestions = joinQuestionGroups(orderedQuestions);
-
-        return orderedQuestions;
-    }
-
-    function joinQuestionGroups(orderedQuestions) {
-        var groupIdCount, fromIndex, toIndex;
-        var groupIdArray = [];
-        const uniqueGroupIds = [];
-
-        orderedQuestions.forEach(question => {
-            if (question.quiz_group_id && uniqueGroupIds.indexOf(question.quiz_group_id) === -1) uniqueGroupIds.push(question.quiz_group_id) // Creating array of uniqueGroupIds
-        })
-
-        for (let i = 0; i < uniqueGroupIds.length; i++) {
-            groupIdCount = orderedQuestions.reduce((count, question) => question.quiz_group_id === uniqueGroupIds[i] ? ++count : count, 0)
-            if (groupIdCount === 1) continue;
-            for (let k = 1; k < groupIdCount; k++) {
-                groupIdArray = orderedQuestions.map(question => question.quiz_group_id)
-                toIndex = groupIdArray.indexOf(uniqueGroupIds[i]) + k;
-                fromIndex = groupIdArray.indexOf(uniqueGroupIds[i], groupIdArray.indexOf(uniqueGroupIds[i]) + k);
-                orderedQuestions = arrayShift(orderedQuestions, fromIndex, toIndex);
-            }
-        }
-        return orderedQuestions;
-    }
-
-    function arrayShift(array, fromIndex, toIndex) {
-        var element = array[fromIndex];
-        array.splice(fromIndex, 1);
-        array.splice(toIndex, 0, element);
-        return array;
     }
 
     async function updateGraphics(question) {
@@ -274,7 +179,6 @@
         const responseText = await $.ajax({
             url: `${window.location.origin}/courses/${courseId}/quizzes/${quizId}/edit`,
             success: function (data) {
-                console.log('done!')
                 return data;
             }
         });
@@ -289,7 +193,7 @@
         return questionOrderIds;
     }
 
-    async function orderQuestionsV2(questions) {
+    async function orderQuestions(questions) {
         const questionOrderIds = await getQuestionOrderIds();
         if (questions.length !== questionOrderIds.length) {
             return false;
@@ -309,16 +213,19 @@
             return;
         }
 
-        const columns = ["id", "quiz_group_id", "position", "question_text"];
+        const columns = ["id", "quiz_group_id", "question_text"];
+        console.log('Unordered questions:')
         console.table(questions, columns);
 
         // Canvas' Quiz Questions API includes a 'position' parameter but it always returns null (it is broken). Therefore, ordering of questions must be done based on a quiz submission. The function orderQuestions identifies the most recent submission and reorders questions (if necessary) to reflect this order.
         //questions = await orderQuestions(questions)
-        questions = await orderQuestionsV2(questions)
+        questions = await orderQuestions(questions)
         if (!questions) {
             alert('Number of questions retrieved by API does not match number of questions scraped from quiz. Aborting.')
             return;
         }
+
+        console.log('Ordered questions:')
         console.table(questions, columns);
         //debugger;
 
@@ -422,7 +329,7 @@
                 }
                 default: {
                     debugger;
-                    //alert('Non supported question type found. Aborting.');
+                    alert('Non supported question type found. Aborting.');
                     return false;
                 }
             }
