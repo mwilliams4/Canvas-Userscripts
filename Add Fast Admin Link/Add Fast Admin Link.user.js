@@ -37,8 +37,8 @@
             const svg = document.querySelector('#global_nav_accounts_link > div.menu-item-icon-container > svg').cloneNode(true);
             div1.appendChild(svg);
             const div2 = document.createElement('div');
-            div2.classList.add('menu-item__text');
             div2.appendChild(document.createTextNode('Fast Admin'));
+            div2.classList.add('menu-item__text');
             anchor.appendChild(div1);
             anchor.appendChild(div2);
             list.appendChild(anchor);

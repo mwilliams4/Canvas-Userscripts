@@ -231,15 +231,15 @@ O1B \tO1B.NURS1234.2022.S1\tc5555555`;
   }
 
   function checkDialog() {
-    var rawtext = document.getElementById('mw_section_text');
+    var rawText = document.getElementById('mw_section_text');
 
     if (!(Number(courseId))) {
       alert('Unable to determine where to import sections.');
       return;
     }
 
-    if (rawtext.value && rawtext.value.trim() !== '') {
-      parseDialog(rawtext.value)
+    if (rawText.value && rawText.value.trim() !== '') {
+      parseDialog(rawText.value)
     } else {
       alert('You must paste your section data into the textbox.');
     }
@@ -388,7 +388,7 @@ O1B \tO1B.NURS1234.2022.S1\tc5555555`;
     var parts = header.split(',');
     var links = {};
     // Parse each part into a named link
-    _.each(parts, function (p) {
+    parts.forEach(p => {
       var section = p.split(';');
       if (section.length != 2) {
         throw new Error("section could not be split on ';'");
