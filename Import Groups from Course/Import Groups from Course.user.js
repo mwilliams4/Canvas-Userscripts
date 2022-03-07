@@ -15,18 +15,18 @@
     const uniqueLinkId = 'mw_groups_import';
 
     window.addEventListener('DOMContentLoaded', () => {
-        
+
     });
 
     if (document.readyState !== 'loading') {
         console.log('Document is already ready, just execute code here');
-        addImportButton('Import Groups from Course');
-      } else {
+        addImportButton('Import...');
+    } else {
         document.addEventListener('DOMContentLoaded', function () {
-          console.log('Document was not ready, place code here');
-          addImportButton('Import Groups from Course');
+            console.log('Document was not ready, place code here');
+            addImportButton('Import...');
         });
-      }
+    }
 
     function addImportButton(linkText) {
         if (!document.getElementById(uniqueLinkId)) {
@@ -132,8 +132,7 @@
         if (!(resp.id)) {
             alert('Could not find course.');
             return;
-        }
-        else {
+        } else {
             var courseIdFlag = checkCourseId();
             if (!courseIdFlag) {
                 alert('Unable to determine where to import sections.');
@@ -289,8 +288,7 @@
         if (!(Number(courseId))) {
             alert('Unable to determine where to import sections.');
             return false;
-        }
-        else {
+        } else {
             return true;
         }
     }
@@ -339,7 +337,3 @@
     }
 
 })();
-
-
-
-

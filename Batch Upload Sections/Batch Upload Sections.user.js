@@ -252,8 +252,7 @@ O1B \tO1B.NURS1234.2022.S1\tc5555555`;
     while (linesOfText.at(-1) === '' || linesOfText.at(0) === '') {
       if (linesOfText.at(-1) === '') {
         linesOfText.pop()
-      }
-      else if (linesOfText.at(-0) === '') {
+      } else if (linesOfText.at(-0) === '') {
         linesOfText.shift()
       }
     }
@@ -305,7 +304,17 @@ O1B \tO1B.NURS1234.2022.S1\tc5555555`;
       const uniqueStudentsInCourse = removeStudentsNotInCourse(activeUsersInCourse, uniqueStudents);
       console.log("uniqueStudentsInCourse", uniqueStudentsInCourse);
 
-      processDialog(uniqueSections, uniqueStudentsInCourse);
+      if (confirm(`Number of unique sections: ${uniqueSections.length}
+Number of unique students in course: ${uniqueStudentsInCourse.length}
+Continue uploading sections?`)) {
+        processDialog(uniqueSections, uniqueStudentsInCourse);
+        return;
+      }
+
+      deactivateLoadingSpinner();
+      return;
+
+
     })
 
   }
@@ -346,8 +355,7 @@ O1B \tO1B.NURS1234.2022.S1\tc5555555`;
 
       if (parsedLinkHeader && parsedLinkHeader.next) {
         url = parsedLinkHeader.next;
-      }
-      else {
+      } else {
         url = null;
       }
       console.log(`Fetched from page ${i}. Enrolments: ${enrolments.length}.`);
@@ -472,8 +480,7 @@ O1B \tO1B.NURS1234.2022.S1\tc5555555`;
           sectionName: input2dArray[i]['sectionName'],
           sectionSISId: input2dArray[i]['sectionSISId']
         }
-      }
-      else if (!input2dArray[i]['sectionSISId'] || input2dArray[i]['sectionSISId'].length === 0) {
+      } else if (!input2dArray[i]['sectionSISId'] || input2dArray[i]['sectionSISId'].length === 0) {
         outputArray[++j] = {
           sectionName: input2dArray[i]['sectionName'],
           sectionSISId: undefined
@@ -520,7 +527,3 @@ O1B \tO1B.NURS1234.2022.S1\tc5555555`;
   }
 
 })();
-
-
-
-

@@ -36,7 +36,8 @@
                 if (!insBefore) return;
                 break;
             }
-            default: return;
+            default:
+                return;
         }
         const listItem = document.createElement('li');
         listItem.setAttribute('role', 'presentation');
@@ -84,8 +85,7 @@
         if (isHTML(string)) {
             el.innerHTML = string;
             el.childNodes[0].innerHTML = `${i + 1}. ${el.childNodes[0].innerHTML}`
-        }
-        else {
+        } else {
             const p = document.createElement('p');
             p.innerHTML = `${i + 1}. ${string}`;
             el.appendChild(p);
@@ -98,8 +98,7 @@
         if (isHTML(string)) {
             el.innerHTML = string;
             el.childNodes[0].innerHTML = correct ? `*${alphabet[k]}. ${el.childNodes[0].innerHTML}` : `${alphabet[k]}. ${el.childNodes[0].innerHTML}`;
-        }
-        else {
+        } else {
             const p = document.createElement('p');
             p.innerHTML = correct ? `*${alphabet[k]}. ${string}` : `${alphabet[k]}. ${string}`;
             el.appendChild(p);
@@ -118,7 +117,10 @@
         }
         response = await fetch(dataApiEndpoint, settings);
         responseJSON = await response.json();
-        ({ url, uuid } = responseJSON)
+        ({
+            url,
+            uuid
+        } = responseJSON)
 
         image.setAttribute('src', `${url}&verifier=${uuid}`)
         return image;
@@ -178,7 +180,10 @@
         if (question.answers.length > 0) {
             // console.log(`This question contains answers.`);
             for (let k = 0; k < question.answers.length; k++) {
-                ({ html, text } = question.answers[k])
+                ({
+                    html,
+                    text
+                } = question.answers[k])
                 answerEl = document.createElement('body');
                 if (!html) html = text;
                 answerEl.innerHTML = html;
@@ -283,10 +288,13 @@
         console.table(questions, columns);
 
         for (let i = 0; i < questions.length; i++) {
-            // console.log(`===================== NOW RUNNING QUESTION ${i + 1} =====================`);
             question = questions[i];
             question = await updateGraphics(question);
-            ({ question_text: text, question_type: type, answers, } = question)
+            ({
+                question_text: text,
+                question_type: type,
+                answers,
+            } = question)
             //if (!isHTML(text)) text = `<p>${text}</p>`;
             blankIds.length = 0;
 
@@ -297,7 +305,11 @@
                 case 'multiple_choice_question': {
                     innerHTML += addNumber(text, i);
                     for (let k = 0; k < answers.length; k++) {
-                        ({ html, text, weight, } = answers[k]);
+                        ({
+                            html,
+                            text,
+                            weight,
+                        } = answers[k]);
                         if (html) text = html;
                         if (weight !== 0) innerHTML += addLetter(text, k, true); // Correct answer
                         else innerHTML += addLetter(text, k); // Incorrect answer
@@ -315,7 +327,11 @@
                 case 'true_false_question': {
                     innerHTML += `<p>Type: T/F</p>${addNumber(text, i)}`;
                     for (let k = 0; k < answers.length; k++) {
-                        ({ html, text, weight } = answers[k])
+                        ({
+                            html,
+                            text,
+                            weight
+                        } = answers[k])
                         if (answers[k].weight !== 0) innerHTML += addLetter(text, k, true); // Correct answer
                         else innerHTML += addLetter(text, k); // Incorrect answer
                     }
@@ -324,7 +340,11 @@
                 case 'multiple_answers_question': {
                     innerHTML += `<p>Type: MA</p>${addNumber(text, i)}`;
                     for (let k = 0; k < answers.length; k++) {
-                        ({ html, text, weight, } = answers[k]);
+                        ({
+                            html,
+                            text,
+                            weight,
+                        } = answers[k]);
                         if (html) text = html;
                         if (weight !== 0) innerHTML += addLetter(text, k, true); // Correct answer
                         else innerHTML += addLetter(text, k); // Incorrect answer
@@ -334,7 +354,9 @@
                 case 'short_answer_question': { // Fill in the blank
                     innerHTML += `<p>Type: F</p>${addNumber(text, i)}`;
                     for (let k = 0; k < answers.length; k++) {
-                        ({ text } = answers[k]);
+                        ({
+                            text
+                        } = answers[k]);
                         innerHTML += addLetter(text, k);
                     }
                     break;
@@ -374,9 +396,14 @@
                 }
                 case 'matching_question': {
                     innerHTML += `<p>Type: MT</p>${addNumber(text, i)}`;
-                    ({ matching_answer_incorrect_matches: distractors } = question)
+                    ({
+                        matching_answer_incorrect_matches: distractors
+                    } = question)
                     for (let k = 0; k < answers.length; k++) {
-                        ({ left, right } = answers[k]);
+                        ({
+                            left,
+                            right
+                        } = answers[k]);
                         innerHTML += addLetter(`${left} = ${right}`, k);
                     }
                     if (distractors) innerHTML += `<p>Distractors: ${distractors.split('\n').join(', ')}</p>`
@@ -385,7 +412,15 @@
                 case 'numerical_question': {
                     innerHTML += `<p>Type: Numerical</p>${addNumber(text, i)}`;
                     for (let k = 0; k < answers.length; k++) {
-                        ({ numerical_answer_type: answerType, start, end, approximate, precision, exact, margin } = answers[k]);
+                        ({
+                            numerical_answer_type: answerType,
+                            start,
+                            end,
+                            approximate,
+                            precision,
+                            exact,
+                            margin
+                        } = answers[k]);
                         switch (answerType) {
                             case 'range_answer': {
                                 innerHTML += addLetter(`Answer in the range: between ${start} and ${end}.`, k, true);
@@ -405,9 +440,18 @@
                 }
                 case 'calculated_question': {
                     innerHTML += `<p>Type: Formula</p>${addNumber(text, i)}`;
-                    ({ variables, answer_tolerance, formulas } = question)
+                    ({
+                        variables,
+                        answer_tolerance,
+                        formulas
+                    } = question)
                     for (let k = 0; k < variables.length; k++) {
-                        ({ name, min, max, scale: decimals } = variables[k])
+                        ({
+                            name,
+                            min,
+                            max,
+                            scale: decimals
+                        } = variables[k])
                         innerHTML += `<p>[${name}]: min = ${min}, max = ${max}, decimals = ${decimals}</p>`;
                     }
                     innerHTML += `<p>Formula: ${formulas.at(-1).formula}</p><p>Answer tolerance: ${answer_tolerance}</p>`
@@ -449,8 +493,7 @@
 
             if (parsedLinkHeader && parsedLinkHeader.next) {
                 url = parsedLinkHeader.next;
-            }
-            else {
+            } else {
                 url = null;
             }
             console.log(`Fetched from page ${i}. Questions: ${questions.length}.`);
@@ -566,8 +609,7 @@
     function checkIds() {
         if (Number(courseId) && Number(quizId)) {
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
@@ -581,7 +623,3 @@
     }
 
 })();
-
-
-
-

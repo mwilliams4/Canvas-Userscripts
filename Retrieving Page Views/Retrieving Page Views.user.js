@@ -20,6 +20,7 @@
   const userId = getUserId();
   const fileName = 'pageviews.csv'
 
+  // TODO update function again to add button
   function addExportButton() {
     var parent;
     if (document.getElementById(uniqueLinkId)) return;
@@ -51,7 +52,7 @@
     const csvArr = [];
 
 
-    
+
     const pageViews = await getPageViews(dates.dateFrom, dates.dateTo);
 
     if (pageViews.length === 0) {
@@ -214,8 +215,7 @@
 
       if (parsedLinkHeader && parsedLinkHeader.next) {
         url = parsedLinkHeader.next;
-      }
-      else {
+      } else {
         url = null;
       }
       console.log(`Fetched from page ${i}. Length: ${pageViews.length}.`);
@@ -294,7 +294,9 @@
       csvFile += processRow(rows[i]);
     }
 
-    var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+    var blob = new Blob([csvFile], {
+      type: 'text/csv;charset=utf-8;'
+    });
     if (navigator.msSaveBlob) { // IE 10+
       navigator.msSaveBlob(blob, filename);
     } else {
