@@ -301,11 +301,16 @@ O1B \tO1B.NURS1234.2022.S1\tc5555555`;
         return;
       }
 
-      const uniqueStudentsInCourse = removeStudentsNotInCourse(activeUsersInCourse, uniqueStudents);
+      const separatedStudents = removeStudentsNotInCourse(activeUsersInCourse, uniqueStudents)
+      const uniqueStudentsInCourse = separatedStudents[0];
+      const uniqueStudentsNotInCourse = separatedStudents[1];
       console.log("uniqueStudentsInCourse", uniqueStudentsInCourse);
+      console.log("uniqueStudentsNotInCourse", uniqueStudentsNotInCourse);
+
 
       if (confirm(`Number of unique sections: ${uniqueSections.length}
 Number of unique students in course: ${uniqueStudentsInCourse.length}
+Number of unique students not in course: ${uniqueStudentsNotInCourse.length}
 Continue uploading sections?`)) {
         processDialog(uniqueSections, uniqueStudentsInCourse);
         return;
@@ -325,7 +330,11 @@ Continue uploading sections?`)) {
       return activeUsersInCourse.some(user => user['user']['sis_user_id'] === el['studentId']);
     });
 
-    return uniqueStudentsInCourse;
+    const uniqueStudentsNotInCourse = $.grep(uniqueStudents, function (el) {
+      return !(activeUsersInCourse.some(user => user['user']['sis_user_id'] === el['studentId']));
+    });
+
+    return [uniqueStudentsInCourse, uniqueStudentsNotInCourse];
   }
 
   async function getStudentsInCourse() {
