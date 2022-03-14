@@ -235,6 +235,8 @@
     }
 
     async function getQuestionOrderIds() {
+        var questionNodes, questionNodesArray;
+
         const responseText = await $.ajax({
             url: `${window.location.origin}/courses/${courseId}/quizzes/${quizId}/edit`,
             success: function (data) {
@@ -245,10 +247,16 @@
         const doc = document.createElement('div');
         doc.innerHTML = responseText;
 
-        const questionNodes = doc.querySelectorAll('div.question_text.user_content[id]:not(#question_new_question_text)');
-        const questionNodesArray = Array.from(questionNodes);
-        const questionOrderIds = questionNodesArray.map(node => Number(node.id.split('_')[1]));
+        questionNodes = doc.querySelectorAll('div.question_text.user_content[id]:not(#question_new_question_text)');
+        if (questionNodes.length === 0) questionNodes = doc.querySelectorAll('div.display_question.question[id]:not(#question_new_question_text)');
+        debugger;
 
+        questionNodesArray = Array.from(questionNodes);
+        questionNodesArray = questionNodesArray.filter(questionNode => {
+            return /\d/.test(questionNode.id)
+        })
+
+        const questionOrderIds = questionNodesArray.map(node => Number(node.id.split('_')[1]));
         return questionOrderIds;
     }
 
