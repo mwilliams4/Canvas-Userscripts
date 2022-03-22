@@ -27,28 +27,30 @@
 
         var anchor = document.createElement('a');
         anchor.classList.add('btn');
+        anchor.id = uniqueLinkId;
+        anchor.addEventListener('click', () => {
+            processRequest();
+        });
+        var icon = document.createElement('i');
+        icon.classList.add(buttonIcon);
+        anchor.appendChild(icon);
+        anchor.appendChild(document.createTextNode(` ${buttonText}`));
+        parent.appendChild(anchor);
+
+        var anchor = document.createElement('a');
+        anchor.classList.add('btn');
         anchor.id = uniqueLinkIdByStudent;
         anchor.addEventListener('click', () => {
             openDialog();
         });
+        anchor.style.margin = '5px';
         var icon = document.createElement('i');
         icon.classList.add(buttonIcon);
         anchor.appendChild(icon);
         anchor.appendChild(document.createTextNode(` Export by Student`));
         parent.appendChild(anchor);
 
-        var anchor = document.createElement('a');
-        anchor.classList.add('btn');
-        anchor.id = uniqueLinkId;
-        anchor.addEventListener('click', () => {
-            processRequest();
-        });
-        anchor.style.marginLeft = '5px';
-        var icon = document.createElement('i');
-        icon.classList.add(buttonIcon);
-        anchor.appendChild(icon);
-        anchor.appendChild(document.createTextNode(` ${buttonText}`));
-        parent.appendChild(anchor);
+
 
         return;
     }
@@ -102,7 +104,7 @@
 
                 'modal': true,
                 'height': 'auto',
-                'width': '40%'
+                'width': '30%'
             });
             if (!$(`#${uniqueDialogId}`).dialog('isOpen')) {
                 $(`#${uniqueDialogId}`).dialog('open');
@@ -128,7 +130,7 @@
         const user = await getUser(inputUserSISId);
 
         if (!user) {
-            alert('Invalid User.')
+            alert('Unable to find user.')
             return false
         }
 
@@ -144,7 +146,7 @@
 
         if (gradeChanges.length === 0) {
             toggleLoadingSpinner();
-            alert('No gradeChanges found.');
+            alert('No Grade Changes found.');
             return;
         }
 
@@ -153,15 +155,14 @@
             .map(gradeChange => {
                 date = new Date(gradeChange.created_at);
                 return {
-                    created_at: date.toLocaleString(),
-                    event_type: gradeChange.event_type,
-                    grader: gradeChange.grader ? gradeChange.grader.name : '',
-                    column: gradeChange.assignment ? gradeChange.assignment.name : (gradeChange.course_override_grade ? 'FINAL GRADE OVERRIDE' : ''),
-                    grade_before: gradeChange.grade_before ? gradeChange.grade_before : '',
-                    grade_after: gradeChange.grade_after,
+                    date: date.toLocaleString(),
                     student_name: gradeChange.user.name,
                     sis_user_id: gradeChange.user.sis_user_id,
                     student_id: gradeChange.links.student,
+                    grader: gradeChange.grader ? gradeChange.grader.name : '',
+                    artefact: gradeChange.assignment ? gradeChange.assignment.name : (gradeChange.course_override_grade ? 'FINAL GRADE OVERRIDE' : ''),
+                    grade_before: gradeChange.grade_before ? gradeChange.grade_before : '',
+                    grade_after: gradeChange.grade_after,
                 }
             });
 
@@ -194,22 +195,21 @@
 
         if (gradeChanges.length === 0) {
             toggleLoadingSpinner();
-            alert('No gradeChanges found.');
+            alert('No Grade Changes found.');
             return;
         }
 
         const filteredGradeChanges = gradeChanges.map(gradeChange => {
             date = new Date(gradeChange.created_at);
             return {
-                created_at: date.toLocaleString(),
-                event_type: gradeChange.event_type,
-                grader: gradeChange.grader ? gradeChange.grader.name : '',
-                column: gradeChange.assignment ? gradeChange.assignment.name : (gradeChange.course_override_grade ? 'FINAL GRADE OVERRIDE' : ''),
-                grade_before: gradeChange.grade_before ? gradeChange.grade_before : '',
-                grade_after: gradeChange.grade_after,
+                date: date.toLocaleString(),
                 student_name: gradeChange.user.name,
                 sis_user_id: gradeChange.user.sis_user_id,
                 student_id: gradeChange.links.student,
+                grader: gradeChange.grader ? gradeChange.grader.name : '',
+                artefact: gradeChange.assignment ? gradeChange.assignment.name : (gradeChange.course_override_grade ? 'FINAL GRADE OVERRIDE' : ''),
+                grade_before: gradeChange.grade_before ? gradeChange.grade_before : '',
+                grade_after: gradeChange.grade_after,
             }
         });
 
@@ -246,6 +246,7 @@
     async function getGradeChangeLogByStudent(user) {
         var gradeChanges = [];
         var users = [];
+        var assignments = [];
         var parsedLinkHeader, url;
 
         url = `${window.location.origin}/api/v1/audit/grade_change/students/${user.id}?per_page=100`;
@@ -330,7 +331,7 @@
             data.linked.assignments.forEach(assignment => {
                 if (!(assignments.map(assignment => assignment.id).some(id => id === assignment.id))) assignments.push(assignment);
             })
-            debugger
+
             parsedLinkHeader = parseLinkHeader(response.headers.get('link'));
 
             if (parsedLinkHeader && parsedLinkHeader.next) {
