@@ -184,6 +184,10 @@
     if (el) {
       el.value = '';
     }
+    var el = document.getElementById('mw_pageviews_dateto');
+    if (el) {
+      el.value = '';
+    }
   }
 
   async function getPageViews(dateFrom, dateTo) {

@@ -32,7 +32,6 @@
             case `${window.location.origin}/courses/${courseId}/quizzes/${quizId}/edit`:
             case `${window.location.origin}/courses/${courseId}/quizzes/${quizId}/edit/`: {
                 insBefore = document.querySelector('#manage-toolbar > li > a.delete_quiz_link').parentNode;
-                console.log("🚀 DEBUGGING ~ file: Export Classic Quiz.user.js ~ line 32 ~ addExportButton ~ insBefore", insBefore);
                 if (!insBefore) return;
                 break;
             }
@@ -249,7 +248,6 @@
 
         questionNodes = doc.querySelectorAll('div.question_text.user_content[id]:not(#question_new_question_text)');
         if (questionNodes.length === 0) questionNodes = doc.querySelectorAll('div.display_question.question[id]:not(#question_new_question_text)');
-        debugger;
 
         questionNodesArray = Array.from(questionNodes);
         questionNodesArray = questionNodesArray.filter(questionNode => {
@@ -384,7 +382,6 @@
                     break;
                 }
                 case 'multiple_dropdowns_question': {
-                    //debugger;
                     answers.forEach(answer => {
                         if (blankIds.indexOf(answer.blank_id) === -1) blankIds.push(answer.blank_id) // Creating array of unique blank ids
                     })
@@ -487,6 +484,7 @@
             },
         }
 
+        var i = 1;
         while (url !== null) {
             const response = await fetch(url, settings)
 
