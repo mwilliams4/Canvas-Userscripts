@@ -43,7 +43,7 @@
     });
     anchor.style.marginBottom = '5px';
     const icon = document.createElement('i');
-    icon.classList.add('icon-download');
+    icon.classList.add('icon-ms-excel');
     anchor.appendChild(icon);
     anchor.appendChild(document.createTextNode(' page views csv in range...'));
     // span.appendChild(anchor);
