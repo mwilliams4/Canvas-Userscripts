@@ -21,20 +21,20 @@
 
     function addButtons(buttonText, buttonIcon) {
         var parent;
-        if (document.getElementById(uniqueLinkId)) return;
+        if (document.getElementById(uniqueLinkId) || document.getElementById(uniqueLinkIdByStudent)) return;
         parent = document.querySelector('#wrapper > div.ic-app-nav-toggle-and-crumbs.no-print');
         if (!parent) return;
 
         var anchor = document.createElement('a');
         anchor.classList.add('btn');
-        anchor.id = uniqueLinkId;
+        anchor.id = uniqueLinkIdByStudent;
         anchor.addEventListener('click', () => {
             openDialog();
         });
         var icon = document.createElement('i');
         icon.classList.add(buttonIcon);
         anchor.appendChild(icon);
-        anchor.appendChild(document.createTextNode(`Export by Student`));
+        anchor.appendChild(document.createTextNode(` Export by Student`));
         parent.appendChild(anchor);
 
         var anchor = document.createElement('a');
@@ -81,6 +81,10 @@
     }
 
     function openDialog() {
+        if (!checkId()) {
+            alert('Could not determine course. Aborting.');
+            return;
+        }
         try {
             createDialog();
 
@@ -152,6 +156,7 @@
                     created_at: date.toLocaleString(),
                     event_type: gradeChange.event_type,
                     grader: gradeChange.grader ? gradeChange.grader.name : '',
+                    column: gradeChange.assignment ? gradeChange.assignment.name : (gradeChange.course_override_grade ? 'FINAL GRADE OVERRIDE' : ''),
                     grade_before: gradeChange.grade_before ? gradeChange.grade_before : '',
                     grade_after: gradeChange.grade_after,
                     student_name: gradeChange.user.name,
@@ -178,6 +183,10 @@
     }
 
     async function processRequest() {
+        if (!checkId()) {
+            alert('Could not determine course. Aborting.');
+            return;
+        }
         toggleLoadingSpinner();
         const gradeChanges = await getGradeChangeLog();
         var csvArr = [];
@@ -195,6 +204,7 @@
                 created_at: date.toLocaleString(),
                 event_type: gradeChange.event_type,
                 grader: gradeChange.grader ? gradeChange.grader.name : '',
+                column: gradeChange.assignment ? gradeChange.assignment.name : (gradeChange.course_override_grade ? 'FINAL GRADE OVERRIDE' : ''),
                 grade_before: gradeChange.grade_before ? gradeChange.grade_before : '',
                 grade_after: gradeChange.grade_after,
                 student_name: gradeChange.user.name,
@@ -264,6 +274,9 @@
             data.linked.users.forEach(user => {
                 if (!(users.map(user => user.id).some(id => id === user.id))) users.push(user);
             })
+            data.linked.assignments.forEach(assignment => {
+                if (!(assignments.map(assignment => assignment.id).some(id => id === assignment.id))) assignments.push(assignment);
+            })
 
             parsedLinkHeader = parseLinkHeader(response.headers.get('link'));
 
@@ -279,6 +292,7 @@
         gradeChanges.forEach(gradeChange => {
             gradeChange.user = users.find(user => user.id == gradeChange.links.student);
             gradeChange.grader = users.find(user => user.id == gradeChange.links.grader);
+            gradeChange.assignment = assignments.find(assignment => assignment.id == gradeChange.links.assignment);
         })
 
         return gradeChanges;
@@ -287,6 +301,7 @@
     async function getGradeChangeLog() {
         var gradeChanges = [];
         var users = [];
+        var assignments = [];
         var parsedLinkHeader, url;
 
         url = `${window.location.origin}/api/v1/audit/grade_change/courses/${courseId}?per_page=100`;
@@ -312,7 +327,10 @@
             data.linked.users.forEach(user => {
                 if (!(users.map(user => user.id).some(id => id === user.id))) users.push(user);
             })
-
+            data.linked.assignments.forEach(assignment => {
+                if (!(assignments.map(assignment => assignment.id).some(id => id === assignment.id))) assignments.push(assignment);
+            })
+            debugger
             parsedLinkHeader = parseLinkHeader(response.headers.get('link'));
 
             if (parsedLinkHeader && parsedLinkHeader.next) {
@@ -327,6 +345,7 @@
         gradeChanges.forEach(gradeChange => {
             gradeChange.user = users.find(user => user.id == gradeChange.links.student);
             gradeChange.grader = users.find(user => user.id == gradeChange.links.grader);
+            gradeChange.assignment = assignments.find(assignment => assignment.id == gradeChange.links.assignment);
         })
 
         return gradeChanges;
