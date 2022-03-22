@@ -24,26 +24,31 @@
   function addExportButton() {
     var parent;
     if (document.getElementById(uniqueLinkId)) return;
-    parent = document.querySelector('#pageviews > div > span > span.fOyUs_bGBk.fOyUs_fhgP.fOyUs_divt.dJCgj_bGBk.dJCgj_dfFp > span');
-    const insBefore = document.querySelector('#pageviews > div > span > span.fOyUs_bGBk.fOyUs_fhgP.fOyUs_divt.dJCgj_bGBk.dJCgj_dfFp > span > span:nth-child(2)');
+    // parent = document.querySelector('#pageviews > div > span > span.fOyUs_bGBk.fOyUs_fhgP.fOyUs_divt.dJCgj_bGBk.dJCgj_dfFp > span');
+    parent = document.querySelector('#pageviews_datefilter');
+    // const insBefore = document.querySelector('#pageviews > div > span > span.fOyUs_bGBk.fOyUs_fhgP.fOyUs_divt.dJCgj_bGBk.dJCgj_dfFp > span > span:nth-child(2)');
     console.log('hi', parent)
     if (!parent) return;
-    const span = document.createElement('span');
-    span.style.marginLeft = '5px';
+    parent.style.alignItems = 'flex-end';
+    parent.style.justifyContent = 'space-between';
+    // const span = document.createElement('span');
+    // span.style.marginLeft = '5px';
     const anchor = document.createElement('a');
-    anchor.setAttribute('margin-right', '0');
+    // anchor.setAttribute('margin-right', '0');
     anchor.setAttribute('tabindex', '-1');
     anchor.classList.add('btn');
     anchor.id = uniqueLinkId;
     anchor.addEventListener('click', () => {
       openDialog();
     });
+    anchor.style.marginBottom = '5px';
     const icon = document.createElement('i');
     icon.classList.add('icon-download');
     anchor.appendChild(icon);
-    anchor.appendChild(document.createTextNode(' Page Views CSV in range...'));
-    span.appendChild(anchor);
-    insBefore.parentNode.insertBefore(span, insBefore);
+    anchor.appendChild(document.createTextNode(' page views csv in range...'));
+    // span.appendChild(anchor);
+    // insBefore.parentNode.insertBefore(span, insBefore);
+    parent.appendChild(anchor);
     return;
   }
 
