@@ -16,13 +16,9 @@
   const courseId = getCourseId();
   const uniqueLinkId = 'mw_section_upload';
 
-  if (document.readyState !== 'loading') {
+  window.addEventListener('load', function () {
     addSectionButton('Import Course Sections', 'icon-upload');
-  } else {
-    document.addEventListener('DOMContentLoaded', function () {
-      addSectionButton('Import Course Sections', 'icon-upload');
-    });
-  }
+  });
 
   function createLoadingSpinner() {
     const el = document.createElement('div');

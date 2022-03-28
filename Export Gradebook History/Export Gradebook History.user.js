@@ -579,13 +579,8 @@
         return;
     }
 
-
-    if (document.readyState !== 'loading') {
+    window.addEventListener('load', () => {
         addButtons('Export History', 'icon-download');
-    } else {
-        document.addEventListener('DOMContentLoaded', () => {
-            addButtons('Export History', 'icon-download');
-        });
-    }
+    });
 
 })();

@@ -620,12 +620,8 @@
         }
     }
 
-    if (document.readyState !== 'loading') {
+    window.addEventListener('load', () => {
         addExportButton('Export Quiz', 'icon-download');
-    } else {
-        document.addEventListener('DOMContentLoaded', () => {
-            addExportButton('Export Quiz', 'icon-download');
-        });
-    }
+    });
 
 })();

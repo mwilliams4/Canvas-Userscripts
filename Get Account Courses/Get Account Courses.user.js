@@ -370,13 +370,8 @@
         return;
     }
 
-
-    if (document.readyState !== 'loading') {
+    window.addEventListener('load', () => {
         addButton('Export Courses', 'icon-download');
-    } else {
-        document.addEventListener('DOMContentLoaded', () => {
-            addButton('Export Courses', 'icon-download');
-        });
-    }
+    });
 
 })();

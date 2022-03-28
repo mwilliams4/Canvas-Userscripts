@@ -13,11 +13,7 @@
 (function () {
     'use strict';
 
-    if (document.readyState !== 'loading') {
-        removeMaxHeight();
-    } else {
-        document.addEventListener('DOMContentLoaded', removeMaxHeight)
-    }
+    window.addEventListener('load', removeMaxHeight)
 
     function removeMaxHeight() {
         const elementStyle = document.querySelector('#courses_list > div > ul').style;

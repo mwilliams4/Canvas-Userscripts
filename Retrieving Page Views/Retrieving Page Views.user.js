@@ -20,7 +20,6 @@
   const userId = getUserId();
   const fileName = 'pageviews.csv'
 
-  // TODO update function again to add button
   function addExportButton() {
     var parent;
     if (document.getElementById(uniqueLinkId)) return;
@@ -321,12 +320,8 @@
     }
   }
 
-  if (document.readyState !== 'loading') {
+  window.addEventListener('load', () => {
     addExportButton('Export Quiz', 'icon-download');
-  } else {
-    document.addEventListener('DOMContentLoaded', () => {
-      addExportButton('Export Quiz', 'icon-download');
-    });
-  }
+  });
 
 })();

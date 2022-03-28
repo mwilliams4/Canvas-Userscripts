@@ -14,36 +14,22 @@
 
     const uniqueLinkId = 'mw_groups_import';
 
-    window.addEventListener('DOMContentLoaded', () => {
-
-    });
-
-    if (document.readyState !== 'loading') {
-        console.log('Document is already ready, just execute code here');
-        addImportButton('Import...');
-    } else {
-        document.addEventListener('DOMContentLoaded', function () {
-            console.log('Document was not ready, place code here');
-            addImportButton('Import...');
-        });
-    }
-
-    function addImportButton(linkText) {
+    function addButton(linkText) {
         if (!document.getElementById(uniqueLinkId)) {
-            const insAfter = document.querySelector('#group_categories_tabs > div.pull-right.group-categories-actions > a');
-            if (insAfter) {
-                const anchor = document.createElement('a');
-                anchor.id = uniqueLinkId;
-                anchor.classList.add('btn');
-                anchor.style.marginRight = '4px';
-                anchor.addEventListener('click', openDialog);
-                const icon = document.createElement('i');
-                icon.classList.add('icon-import');
-                anchor.appendChild(icon);
-                anchor.appendChild(document.createTextNode(` ${linkText}`));
-                insAfter.parentNode.insertBefore(anchor, insAfter);
-                //insAfter.appendChild(anchor);
-            }
+            const insBefore = document.querySelector('#group_categories_tabs > div.pull-right.group-categories-actions > a');
+            if (!insBefore) return;
+
+            const anchor = document.createElement('a');
+            anchor.id = uniqueLinkId;
+            anchor.classList.add('btn');
+            anchor.style.marginRight = '4px';
+            anchor.addEventListener('click', openDialog);
+            const icon = document.createElement('i');
+            icon.classList.add('icon-import');
+            anchor.appendChild(icon);
+            anchor.appendChild(document.createTextNode(` ${linkText}`));
+            insBefore.parentNode.insertBefore(anchor, insBefore);
+
         }
         return;
     }
@@ -335,5 +321,9 @@
         }
         return id;
     }
+
+    window.addEventListener('load', () => {
+        addButton('Import...');
+    });
 
 })();

@@ -15,11 +15,7 @@
 
     const accountId = 1;
 
-    if (document.readyState !== 'loading') {
-        addAdminButton();
-    } else {
-        document.addEventListener('DOMContentLoaded', addAdminButton)
-    }
+    window.addEventListener('load', addAdminButton)
 
     function addAdminButton() {
         const admin = document.querySelector('div.ic-app-header__main-navigation > #menu > li:nth-child(2)');
