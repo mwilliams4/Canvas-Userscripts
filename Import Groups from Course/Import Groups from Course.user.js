@@ -322,8 +322,7 @@
         return id;
     }
 
-    window.addEventListener('load', () => {
-        addButton('Import...');
-    });
+    if (document.readyState == 'complete' || document.readyState == 'loaded') addButton('Import...');
+    else window.addEventListener('load', () => addButton('Import...'));
 
 })();

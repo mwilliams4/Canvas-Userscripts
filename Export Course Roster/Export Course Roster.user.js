@@ -3,7 +3,7 @@
 // @namespace    mw784
 // @version      1
 // @license      MIT
-// @description  Exports the course roster from the People area
+// @description  Exports the course roster from the People area, bypassing the need to go through New Analytics
 // @author       Matthew Williams
 // @include      https://canvas.newcastle.edu.au/courses/*/users
 // @include      https://newcastle.test.instructure.com/courses/*/users
@@ -56,6 +56,11 @@
     }
 
     async function processRequest() {
+        if (!checkId()) {
+            alert('Could not determine course. Aborting.');
+            return;
+        }
+
         const csvArr = [];
         toggleLoadingSpinner();
 
