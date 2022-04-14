@@ -20,19 +20,19 @@
     const alphabet = 'abcdefghijklmnopqrstuvwxyz';
 
     function addExportButton(buttonText, buttonIcon) {
-        var insBefore;
+        var parent;
         if (document.getElementById(uniqueLinkId)) return;
         switch (window.location.href) {
             case `${window.location.origin}/courses/${courseId}/quizzes/${quizId}`:
             case `${window.location.origin}/courses/${courseId}/quizzes/${quizId}/`: {
-                insBefore = document.querySelector('#toolbar-1 > li.quiz_menu');
-                if (!insBefore) return;
+                parent = document.querySelector('#toolbar-1');
+                if (!parent) return;
                 break;
             }
             case `${window.location.origin}/courses/${courseId}/quizzes/${quizId}/edit`:
             case `${window.location.origin}/courses/${courseId}/quizzes/${quizId}/edit/`: {
-                insBefore = document.querySelector('#manage-toolbar > li > a.delete_quiz_link').parentNode;
-                if (!insBefore) return;
+                parent = document.querySelector('#manage-toolbar');
+                if (!parent) return;
                 break;
             }
             default:
@@ -56,7 +56,8 @@
         anchor.appendChild(icon);
         anchor.appendChild(document.createTextNode(` ${buttonText}`));
         listItem.appendChild(anchor)
-        insBefore.parentNode.insertBefore(listItem, insBefore);
+        // insBefore.parentNode.insertBefore(listItem, insBefore);
+        parent.appendChild(listItem)
         return;
     }
 
