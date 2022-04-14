@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Export Page Views for User
+// @name         Retrieving Page Views
 // @namespace    mw784
 // @version      1
 // @license      MIT
