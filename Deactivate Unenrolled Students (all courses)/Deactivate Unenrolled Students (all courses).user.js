@@ -7,6 +7,7 @@
 // @author       Matthew Williams
 // @include      /^https:\/\/canvas\.newcastle\.edu\.au\/$/
 // @include      /^https:\/\/newcastle\.test\.instructure\.com\/$/
+// @include      /^https:\/\/newcastle\.beta\.instructure\.com\/$/
 // ==/UserScript==
 
 (function () {
@@ -33,7 +34,6 @@
         if (document.getElementById(uniqueLinkId)) return;
 
         parent = document.querySelector('#right-side > div.events_list.recent_feedback + div');
-        console.log(parent);
         if (!parent) return;
 
         const anchor = document.createElement('a');
@@ -51,6 +51,7 @@
         let token;
         let logs = [];
         const csvLogArr = [];
+        const csvArr = [];
         var enrolments, sectionEnrolments, unenrolledStudents, table, course;
         alert('Ensure console is open before proceeding.');
 
@@ -65,6 +66,14 @@
             }
             case 'https://canvas.newcastle.edu.au': {
                 token = localStorage.getItem('token_prod');
+                if (!token) {
+                    alert('Could not find token.');
+                    return;
+                }
+                break;
+            }
+            case 'https://newcastle.beta.instructure.com': {
+                token = localStorage.getItem('token_beta');
                 if (!token) {
                     alert('Could not find token.');
                     return;
@@ -90,7 +99,19 @@
 
         const coursesWithManualSections = identifyCoursesWithManualSections(courses, sections);
 
-        console.table(coursesWithManualSections, ['name', 'sis_course_id']);
+        // ### Exporting list of courses with manual sections
+        const filteredCoursesWithManualSections = coursesWithManualSections.map(course => {
+            return {
+                name: course.name,
+                sis_course_id: course.sis_course_id,
+                sections: course.sections.map(section => section.name).join(', '),
+            }
+        });
+        csvArr.push(Object.keys(filteredCoursesWithManualSections[0]), ...filteredCoursesWithManualSections.map(course => Object.values(course)));
+        exportToCsv('courses_with_manual_sections', csvArr);
+        // ### Exporting list of courses with manual sections
+
+        console.table(coursesWithManualSections, ['name', 'sis_course_id', 'sections']);
         if (!confirm(`Found ${coursesWithManualSections.length} courses with manual sections. See console for details.
 Continue?`));
 
@@ -127,13 +148,14 @@ Continue?`)) {
             }
         }
 
-        const headers = ['deactivate', 'sis_user_id', 'name', 'date', 'course_name', 'sis_course_id', 'sis_section_id', 'term_name', 'sis_term_id']
-        csvLogArr.push(headers, ...logs.map(log => Object.values(log)));
+        if (logs.length > 0) {
+            const headers = Object.keys(logs[0]);
+            csvLogArr.push(headers, ...logs.map(log => Object.values(log)));
 
-        const today = new Date();
+            const today = new Date();
 
-        exportToCsv(`deactivation_${today.toLocaleDateString()}`, csvLogArr);
-
+            exportToCsv(`deactivation_${today.toLocaleDateString()}`, csvLogArr);
+        }
         console.log('Complete.');
 
         toggleLoadingSpinner();
@@ -291,7 +313,7 @@ Continue?`)) {
         var sections = [];
         var parsedLinkHeader;
         var urls = [];
-        const asyncRequests = 50;
+        const asyncRequests = 25;
         var flag = false;
         var iteration = 0;
         const maxIterations = 100;
