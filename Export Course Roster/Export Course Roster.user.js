@@ -56,6 +56,7 @@
     }
 
     async function processRequest() {
+        var filteredEnrolments;
         if (!checkId()) {
             alert('Could not determine course. Aborting.');
             return;
@@ -65,16 +66,26 @@
         toggleLoadingSpinner();
 
         const enrolments = await getEnrolments();
-
-        const filteredEnrolments = enrolments.map(enrolment => {
-            return {
-                id: enrolment.id,
-                created_at: new Date(enrolment.created_at).toString(),
-                name: enrolment.name,
-                sis_user_id: enrolment.sis_user_id,
-                email: enrolment.email,
+debugger;
+        filteredEnrolments = enrolments.map(enrolment => {
+            const userEnrolments = []
+            for (let i = 0; i < enrolment.enrollments.length; i++) {
+                userEnrolments.push(
+                    {
+                    id: enrolment.id,
+                    created_at: new Date(enrolment.enrollments[i].created_at).toLocaleString(),
+                    name: enrolment.name,
+                    sis_user_id: enrolment.sis_user_id,
+                    email: enrolment.email,
+                    sis_section_id: enrolment.enrollments[i].sis_section_id ? enrolment.enrollments[i].sis_section_id : '',
             }
+                    )
+            }
+            return userEnrolments
+
         });
+
+        filteredEnrolments = filteredEnrolments.flat()
 
         const headers = Object.keys(filteredEnrolments[0]);
         csvArr.push(headers, ...filteredEnrolments.map(enrolment => Object.values(enrolment)));
@@ -90,7 +101,7 @@
 
     async function getCourse() {
         var url = `${window.location.origin}/api/v1/courses/${courseId}`;
-        var response, data;
+        var response;
         var settings = {
             headers: {
                 "X-CSRFToken": getCsrfToken()
@@ -112,7 +123,7 @@
         var enrolments = [];
         var parsedLinkHeader;
 
-        var url = `${window.location.origin}/api/v1/courses/${courseId}/users?enrollment_state[]=active&per_page=100`;
+        var url = `${window.location.origin}/api/v1/courses/${courseId}/users?enrollment_state[]=active&per_page=100&include[]=enrollments`;
         var settings = {
             headers: {
                 "X-CSRFToken": getCsrfToken()
