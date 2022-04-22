@@ -63,7 +63,7 @@
         const courses = await getCourses();
         var csvArr = [];
         var date;
-
+        
         if (courses.length === 0) {
             toggleLoadingSpinner();
             alert('No courses found.');
@@ -79,6 +79,7 @@
                 name: course.name,
                 workflow_state: course.workflow_state,
                 created_at: date.toLocaleString(),
+                account_name: course.account_name,
                 'term.name': course.term.name,
                 'term.sis_term_id': course.term.sis_term_id,
             }
@@ -103,7 +104,7 @@
         const maxIterations = 15;
 
         while (flag === false) {
-            urls = [...Array(asyncRequests)].map((e, i) => `${window.location.origin}/api/v1/accounts/${accountId}/courses?per_page=100&include[]=term&page=${iteration*asyncRequests+i+1}`)
+            urls = [...Array(asyncRequests)].map((e, i) => `${window.location.origin}/api/v1/accounts/${accountId}/courses?per_page=100&include[]=term&include[]=account_name&page=${iteration*asyncRequests+i+1}`)
             try {
                 var settings = {
                     headers: {
