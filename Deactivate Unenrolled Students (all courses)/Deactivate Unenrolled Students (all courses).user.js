@@ -121,6 +121,7 @@ Continue?`));
             enrolments = await getEnrolments(course);
             if (!enrolments || enrolments.length === 0) {
                 console.log('Could not fetch course enrolments. Aborting.');
+                toggleLoadingSpinner();
                 return;
             }
 
