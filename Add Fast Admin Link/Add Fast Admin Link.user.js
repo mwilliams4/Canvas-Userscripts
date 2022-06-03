@@ -13,9 +13,13 @@
 (function () {
     'use strict';
 
-    const accountId = 1;
+    const accountId = 1; //Change this to the account ID you are an admin of
 
-    window.addEventListener('load', addAdminButton)
+    if (document.readyState == 'loading') {
+        document.addEventListener('DOMContentLoaded', addAdminButton);
+    } else {
+        addAdminButton();
+    }
 
     function addAdminButton() {
         const admin = document.querySelector('div.ic-app-header__main-navigation > #menu > li:nth-child(2)');
