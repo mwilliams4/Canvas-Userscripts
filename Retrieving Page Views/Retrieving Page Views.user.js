@@ -14,37 +14,36 @@
 // ==/UserScript==
 
 (function () {
-  'use strict';
+  "use strict";
 
-  const uniqueLinkId = 'mw_pageviews_csv';
+  const uniqueLinkId = "mw_pageviews_csv";
   const userId = getUserId();
-  const fileName = 'pageviews.csv'
+  const fileName = "pageviews.csv";
 
   function addExportButton() {
     var parent;
     if (document.getElementById(uniqueLinkId)) return;
     // parent = document.querySelector('#pageviews > div > span > span.fOyUs_bGBk.fOyUs_fhgP.fOyUs_divt.dJCgj_bGBk.dJCgj_dfFp > span');
-    parent = document.querySelector('#pageviews_datefilter');
+    parent = document.querySelector("#pageviews_datefilter");
     // const insBefore = document.querySelector('#pageviews > div > span > span.fOyUs_bGBk.fOyUs_fhgP.fOyUs_divt.dJCgj_bGBk.dJCgj_dfFp > span > span:nth-child(2)');
-    console.log('hi', parent)
     if (!parent) return;
-    parent.style.alignItems = 'flex-end';
-    parent.style.justifyContent = 'space-between';
+    parent.style.alignItems = "flex-end";
+    parent.style.justifyContent = "space-between";
     // const span = document.createElement('span');
     // span.style.marginLeft = '5px';
-    const anchor = document.createElement('a');
+    const anchor = document.createElement("a");
     // anchor.setAttribute('margin-right', '0');
-    anchor.setAttribute('tabindex', '-1');
-    anchor.classList.add('btn');
+    anchor.setAttribute("tabindex", "-1");
+    anchor.classList.add("btn");
     anchor.id = uniqueLinkId;
-    anchor.addEventListener('click', () => {
+    anchor.addEventListener("click", () => {
       openDialog();
     });
-    anchor.style.marginBottom = '5px';
-    const icon = document.createElement('i');
-    icon.classList.add('icon-ms-excel');
+    anchor.style.marginBottom = "5px";
+    const icon = document.createElement("i");
+    icon.classList.add("icon-ms-excel");
     anchor.appendChild(icon);
-    anchor.appendChild(document.createTextNode(' page views csv in range...'));
+    anchor.appendChild(document.createTextNode(" page views csv in range..."));
     // span.appendChild(anchor);
     // insBefore.parentNode.insertBefore(span, insBefore);
     parent.appendChild(anchor);
@@ -55,17 +54,15 @@
     const dates = checkDialog();
     const csvArr = [];
 
-
-
     const pageViews = await getPageViews(dates.dateFrom, dates.dateTo);
 
     if (pageViews.length === 0) {
-      alert('No page views found.');
+      alert("No page views found.");
       return;
     }
     // debugger;
 
-    const filteredPageViews = pageViews.map(pageView => {
+    const filteredPageViews = pageViews.map((pageView) => {
       return {
         session_id: pageView.session_id,
         created_at: new Date(pageView.created_at).toString(),
@@ -78,49 +75,52 @@
         http_method: pageView.http_method,
         controller: pageView.controller,
         id: pageView.id,
-      }
+      };
     });
 
     const headers = Object.keys(filteredPageViews[0]);
-    csvArr.push(headers, ...filteredPageViews.map(pageView => Object.values(pageView)));
+    csvArr.push(
+      headers,
+      ...filteredPageViews.map((pageView) => Object.values(pageView))
+    );
 
     exportToCsv(fileName, csvArr);
   }
 
   function createDialog() {
-    var el = document.querySelector('#mw_pageviews_dialog');
+    var el = document.querySelector("#mw_pageviews_dialog");
     if (!el) {
-      el = document.createElement('div');
-      el.id = 'mw_pageviews_dialog';
-      el.classList.add('ic-Form-control');
-      var label = document.createElement('label');
-      label.htmlFor = 'mw_pageviews_datefrom';
-      label.textContent = 'Date From:';
-      label.classList.add('ic-Label');
+      el = document.createElement("div");
+      el.id = "mw_pageviews_dialog";
+      el.classList.add("ic-Form-control");
+      var label = document.createElement("label");
+      label.htmlFor = "mw_pageviews_datefrom";
+      label.textContent = "Date From:";
+      label.classList.add("ic-Label");
       el.appendChild(label);
-      var input = document.createElement('input');
-      input.id = 'mw_pageviews_datefrom';
-      input.classList.add('ic-Input');
-      input.type = 'text';
-      input.placeholder = 'Enter start date for report, e.g. 2022-01-21';
+      var input = document.createElement("input");
+      input.id = "mw_pageviews_datefrom";
+      input.classList.add("ic-Input");
+      input.type = "text";
+      input.placeholder = "Enter start date for report, e.g. 2022-01-21";
       el.appendChild(input);
-      label = document.createElement('label');
-      label.htmlFor = 'mw_pageviews_dateto';
-      label.textContent = 'Date To:';
-      label.classList.add('ic-Label');
+      label = document.createElement("label");
+      label.htmlFor = "mw_pageviews_dateto";
+      label.textContent = "Date To:";
+      label.classList.add("ic-Label");
       el.appendChild(label);
-      input = document.createElement('input');
-      input.id = 'mw_pageviews_dateto';
-      input.classList.add('ic-Input');
-      input.type = 'text';
-      input.placeholder = 'Enter end date for report, e.g. 2022-01-31';
+      input = document.createElement("input");
+      input.id = "mw_pageviews_dateto";
+      input.classList.add("ic-Input");
+      input.type = "text";
+      input.placeholder = "Enter end date for report, e.g. 2022-01-31";
       el.appendChild(input);
-      var msg = document.createElement('div');
-      msg.id = 'jj_rubric_msg';
-      msg.classList.add('ic-flash-warning');
-      msg.style.display = 'none';
+      var msg = document.createElement("div");
+      msg.id = "jj_rubric_msg";
+      msg.classList.add("ic-flash-warning");
+      msg.style.display = "none";
       el.appendChild(msg);
-      var parent = document.querySelector('body');
+      var parent = document.querySelector("body");
       parent.appendChild(el);
     }
   }
@@ -129,23 +129,26 @@
     try {
       createDialog();
 
-      $('#mw_pageviews_dialog').dialog({
-        'title': 'Export Page Views CSV in date range...',
-        'autoOpen': false,
-        'buttons': [{
-          'text': 'Cancel',
-          'click': closeDialog,
-        }, {
-          'text': 'Export',
-          'click': processRequest,
-          'class': 'Button Button--primary',
-        }],
-        'modal': true,
-        'height': 'auto',
-        'width': '40%',
+      $("#mw_pageviews_dialog").dialog({
+        title: "Export Page Views CSV in date range...",
+        autoOpen: false,
+        buttons: [
+          {
+            text: "Cancel",
+            click: closeDialog,
+          },
+          {
+            text: "Export",
+            click: processRequest,
+            class: "Button Button--primary",
+          },
+        ],
+        modal: true,
+        height: "auto",
+        width: "40%",
       });
-      if (!$('#mw_pageviews_dialog').dialog('isOpen')) {
-        $('#mw_pageviews_dialog').dialog('open');
+      if (!$("#mw_pageviews_dialog").dialog("isOpen")) {
+        $("#mw_pageviews_dialog").dialog("open");
       }
     } catch (e) {
       console.log(e);
@@ -153,44 +156,50 @@
   }
 
   function checkDialog() {
-    var dateFrom = new Date(document.getElementById('mw_pageviews_datefrom').value.trim());
-    var dateTo = new Date(document.getElementById('mw_pageviews_dateto').value.trim());
+    var dateFrom = new Date(
+      document.getElementById("mw_pageviews_datefrom").value.trim()
+    );
+    var dateTo = new Date(
+      document.getElementById("mw_pageviews_dateto").value.trim()
+    );
     dateFrom.setHours(0);
     dateTo.setHours(0);
     // dateTo.setDate(dateTo.getDate() + 1)
     var todayDate = new Date();
 
     if (!dateFrom.valueOf() || !dateTo.valueOf()) {
-      alert('Invalid dates.');
+      alert("Invalid dates.");
       return;
     }
 
     if (dateFrom.getTime() > dateTo.getTime()) {
-      alert('Date to must come after date from.');
+      alert("Date to must come after date from.");
       return;
     }
 
-    if (todayDate.getTime() < dateFrom.getTime() || todayDate.getTime() < dateTo.getTime()) {
-      alert('Dates must be in the past.');
+    if (
+      todayDate.getTime() < dateFrom.getTime() ||
+      todayDate.getTime() < dateTo.getTime()
+    ) {
+      alert("Dates must be in the past.");
       return;
     }
 
     return {
       dateFrom: dateFrom.toISOString(),
       dateTo: dateTo.toISOString(),
-    }
-
+    };
   }
 
   function closeDialog() {
-    $(this).dialog('close');
-    var el = document.getElementById('mw_pageviews_datefrom');
+    $(this).dialog("close");
+    var el = document.getElementById("mw_pageviews_datefrom");
     if (el) {
-      el.value = '';
+      el.value = "";
     }
-    var el = document.getElementById('mw_pageviews_dateto');
+    var el = document.getElementById("mw_pageviews_dateto");
     if (el) {
-      el.value = '';
+      el.value = "";
     }
   }
 
@@ -198,19 +207,19 @@
     var pageViews = [];
     var parsedLinkHeader;
 
-    var url = `${window.location.origin}/api/v1/users/${userId}/page_views?start_time=${dateFrom}&end_time=${dateTo}&per_page=100`
+    var url = `${window.location.origin}/api/v1/users/${userId}/page_views?start_time=${dateFrom}&end_time=${dateTo}&per_page=100`;
 
     var settings = {
       headers: {
-        "X-CSRFToken": getCsrfToken()
+        "X-CSRFToken": getCsrfToken(),
       },
-    }
+    };
 
     console.log(`Fetching page views.`);
 
     var i = 1;
     while (url !== null) {
-      const response = await fetch(url, settings)
+      const response = await fetch(url, settings);
 
       if (!response.ok) {
         return false;
@@ -219,7 +228,7 @@
       const data = await response.json();
       pageViews = [...pageViews, ...data];
 
-      parsedLinkHeader = parseLinkHeader(response.headers.get('link'));
+      parsedLinkHeader = parseLinkHeader(response.headers.get("link"));
 
       if (parsedLinkHeader && parsedLinkHeader.next) {
         url = parsedLinkHeader.next;
@@ -238,16 +247,16 @@
     }
 
     // Split parts by comma
-    var parts = header.split(',');
+    var parts = header.split(",");
     var links = {};
     // Parse each part into a named link
-    parts.forEach(p => {
-      var section = p.split(';');
+    parts.forEach((p) => {
+      var section = p.split(";");
       if (section.length != 2) {
         throw new Error("section could not be split on ';'");
       }
-      var url = section[0].replace(/<(.*)>/, '$1').trim();
-      var name = section[1].replace(/rel="(.*)"/, '$1').trim();
+      var url = section[0].replace(/<(.*)>/, "$1").trim();
+      var name = section[1].replace(/rel="(.*)"/, "$1").trim();
       links[name] = url;
     });
 
@@ -255,9 +264,9 @@
   }
 
   function getCsrfToken() {
-    var csrfRegex = new RegExp('^_csrf_token=(.*)$');
+    var csrfRegex = new RegExp("^_csrf_token=(.*)$");
     var csrf;
-    var cookies = document.cookie.split(';');
+    var cookies = document.cookie.split(";");
     for (var i = 0; i < cookies.length; i++) {
       var cookie = cookies[i].trim();
       var match = csrfRegex.exec(cookie);
@@ -271,7 +280,7 @@
 
   function getUserId() {
     let id = false;
-    const quizRegex = new RegExp('/users/([0-9]+)');
+    const quizRegex = new RegExp("/users/([0-9]+)");
     const matches = quizRegex.exec(window.location.pathname);
     if (matches) {
       id = matches[1];
@@ -281,47 +290,46 @@
 
   function exportToCsv(filename, rows) {
     var processRow = function (row) {
-      var finalVal = '';
+      var finalVal = "";
       for (var j = 0; j < row.length; j++) {
-        var innerValue = row[j] === null ? '' : row[j].toString();
+        var innerValue = row[j] === null ? "" : row[j].toString();
         if (row[j] instanceof Date) {
           innerValue = row[j].toLocaleString();
-        };
+        }
         var result = innerValue.replace(/"/g, '""');
-        if (result.search(/("|,|\n)/g) >= 0)
-          result = '"' + result + '"';
-        if (j > 0)
-          finalVal += ',';
+        if (result.search(/("|,|\n)/g) >= 0) result = '"' + result + '"';
+        if (j > 0) finalVal += ",";
         finalVal += result;
       }
-      return finalVal + '\n';
+      return finalVal + "\n";
     };
 
-    var csvFile = '';
+    var csvFile = "";
     for (var i = 0; i < rows.length; i++) {
       csvFile += processRow(rows[i]);
     }
 
     var blob = new Blob([csvFile], {
-      type: 'text/csv;charset=utf-8;'
+      type: "text/csv;charset=utf-8;",
     });
-    if (navigator.msSaveBlob) { // IE 10+
+    if (navigator.msSaveBlob) {
+      // IE 10+
       navigator.msSaveBlob(blob, filename);
     } else {
       var link = document.createElement("a");
-      if (link.download !== undefined) { // feature detection
+      if (link.download !== undefined) {
+        // feature detection
         // Browsers that support HTML5 download attribute
         var url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
         link.setAttribute("download", filename);
-        link.style.visibility = 'hidden';
+        link.style.visibility = "hidden";
         link.click();
       }
     }
   }
 
-  window.addEventListener('load', () => {
-    addExportButton('Export Quiz', 'icon-download');
+  window.addEventListener("load", () => {
+    addExportButton("Export Quiz", "icon-download");
   });
-
 })();
