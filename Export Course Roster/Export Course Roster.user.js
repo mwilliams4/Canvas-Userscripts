@@ -18,9 +18,11 @@
   const courseEnrolmentsLinkId = "mw_export_course_enrolments";
   const sectionEnrolmentsLinkId = "mw_export_section_enrolments";
 
-  window.addEventListener("load", () => {
+  if (document.readyState == "loading") {
+    document.addEventListener("DOMContentLoaded", addButtons);
+  } else {
     addButtons();
-  });
+  }
 
   function checkId() {
     if (Number(courseId)) return true;

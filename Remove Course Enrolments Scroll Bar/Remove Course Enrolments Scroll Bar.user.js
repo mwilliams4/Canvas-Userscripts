@@ -11,13 +11,18 @@
 // ==/UserScript==
 
 (function () {
-    'use strict';
+  "use strict";
 
-    window.addEventListener('load', removeMaxHeight)
+  if (document.readyState == "loading") {
+    document.addEventListener("DOMContentLoaded", removeMaxHeight);
+  } else {
+    removeMaxHeight();
+  }
 
-    function removeMaxHeight() {
-        const elementStyle = document.querySelector('#courses_list > div > ul').style;
-        elementStyle.removeProperty('max-height');
-    }
-
+  function removeMaxHeight() {
+    const elementStyle = document.querySelector(
+      "#courses_list > div > ul"
+    ).style;
+    elementStyle.removeProperty("max-height");
+  }
 })();

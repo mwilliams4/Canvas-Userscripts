@@ -630,7 +630,11 @@
     return;
   }
 
-  window.addEventListener("load", () => {
+  if (document.readyState == "loading") {
+    document.addEventListener("DOMContentLoaded", () =>
+      addButtons("Export History", "icon-download")
+    );
+  } else {
     addButtons("Export History", "icon-download");
-  });
+  }
 })();

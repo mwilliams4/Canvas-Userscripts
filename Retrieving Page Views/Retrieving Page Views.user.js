@@ -20,6 +20,14 @@
   const userId = getUserId();
   const fileName = "pageviews.csv";
 
+  if (document.readyState == "loading") {
+    document.addEventListener("DOMContentLoaded", () =>
+      addExportButton("Export Quiz", "icon-download")
+    );
+  } else {
+    addExportButton("Export Quiz", "icon-download");
+  }
+
   function addExportButton() {
     var parent;
     if (document.getElementById(uniqueLinkId)) return;
@@ -328,8 +336,4 @@
       }
     }
   }
-
-  window.addEventListener("load", () => {
-    addExportButton("Export Quiz", "icon-download");
-  });
 })();

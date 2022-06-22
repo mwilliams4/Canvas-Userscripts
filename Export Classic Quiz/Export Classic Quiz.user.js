@@ -19,6 +19,14 @@
   const uniqueLinkId = "mw_export_classic_quiz";
   const alphabet = "abcdefghijklmnopqrstuvwxyz";
 
+  if (document.readyState == "loading") {
+    document.addEventListener("DOMContentLoaded", () =>
+      addExportButton("Export Quiz", "icon-download")
+    );
+  } else {
+    addExportButton("Export Quiz", "icon-download");
+  }
+
   function addExportButton(buttonText, buttonIcon) {
     var parent;
     if (document.getElementById(uniqueLinkId)) return;
@@ -675,8 +683,4 @@
       return false;
     }
   }
-
-  window.addEventListener("load", () => {
-    addExportButton("Export Quiz", "icon-download");
-  });
 })();
