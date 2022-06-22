@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Export Course Roster
 // @namespace    mw784
-// @version      1
+// @version      2
 // @license      MIT
 // @description  Exports the course roster from the People area, bypassing the need to go through New Analytics
 // @author       Matthew Williams
