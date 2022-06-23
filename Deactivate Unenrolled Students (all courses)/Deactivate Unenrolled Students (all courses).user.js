@@ -25,11 +25,7 @@
     // 6640, 6680, 6625, 6655, 6685, 6615, 6645, 6675, 6600, 6611, 6660, 6631, 6632, 6633,
   ].map((termCode) => termCode.toString());
 
-  if (document.readyState == "loading") {
-    document.addEventListener("DOMContentLoaded", () => addButton());
-  } else {
-    window.addEventListener("load", () => addButton());
-  }
+  window.addEventListener("load", () => addButton());
 
   function addButton() {
     var parent;
