@@ -26,9 +26,9 @@
   ].map((termCode) => termCode.toString());
 
   if (document.readyState == "loading") {
-    document.addEventListener("DOMContentLoaded", addButton);
+    document.addEventListener("DOMContentLoaded", () => addButton());
   } else {
-    addButton();
+    window.addEventListener("load", () => addButton());
   }
 
   function addButton() {
